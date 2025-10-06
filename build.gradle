@@ -1,0 +1,110 @@
+plugins {
+    id "java"
+    id "org.springframework.boot" version "3.5.4"
+    id "io.spring.dependency-management" version "1.1.6"
+    id "com.google.cloud.tools.jib" version "3.4.5"
+}
+
+group = "com.hermes"
+version = "0.0.1-SNAPSHOT"
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation("org.springframework.boot:spring-boot-starter-web")
+    implementation("org.springframework.boot:spring-boot-starter-data-jpa")
+    implementation("org.springframework.boot:spring-boot-starter-data-redis")
+    implementation("org.springframework.boot:spring-boot-starter-mail")
+    implementation("org.springframework.boot:spring-boot-starter-validation")
+    implementation("org.springframework.boot:spring-boot-starter-cache")
+    implementation("com.github.ulisesbocchio:jasypt-spring-boot-starter:3.0.5")
+
+    compileOnly("org.projectlombok:lombok")
+    annotationProcessor("org.projectlombok:lombok")
+    
+    runtimeOnly("org.postgresql:postgresql")
+
+    runtimeOnly("io.netty:netty-resolver-dns-native-macos:4.2.2.Final:osx-aarch_64")
+    
+    testImplementation("org.springframework.boot:spring-boot-starter-test")
+    testCompileOnly("org.projectlombok:lombok")
+    testAnnotationProcessor("org.projectlombok:lombok")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+}
+
+tasks.named("test") {
+    useJUnitPlatform()
+}
+
+jib {
+    from {
+        image = "amazoncorretto:21"
+        platforms {
+            platform {
+                architecture = "arm64"
+                os = "linux"
+            }
+        }
+    }
+    to {
+        image = "" + System.getenv("JIB_IMAGE")
+        tags = ["latest"]
+        auth {
+            username = "" + System.getenv("TOKEN_USER")
+            password = "" + System.getenv("TOKEN_PWD")
+        }
+    }
+    container {
+        jvmFlags = List.of(
+                // 컨테이너 환경 지원
+                "-XX:+UseContainerSupport",
+                // JVM 사용 최대 메모리 비율
+                "-XX:MaxRAMPercentage=50.0",
+                // JVM 초기 메모리 비율
+                "-XX:InitialRAMPercentage=30.0",
+                // JVM 최소 메모리 비율
+                "-XX:MinRAMPercentage=30.0",
+                // JVM 메모리를 미리 할당
+                "-XX:+AlwaysPreTouch",
+
+                // G1 Garbage Collector 사용
+                "-XX:+UseG1GC",
+                // 참조 처리 병렬화 활성화
+                "-XX:+ParallelRefProcEnabled",
+                // G1GC 힙 영역 크기 설정
+                "-XX:G1HeapRegionSize=16M",
+                // 지정한 힙 사용률 n%에서 GC 트리거
+                "-XX:InitiatingHeapOccupancyPercent=30",
+
+                // 메타스페이스 초기 크기
+                "-XX:MetaspaceSize=128m",
+                // 메타스페이스 최대 크기
+                "-XX:MaxMetaspaceSize=256m",
+
+                // 계층적 컴파일 활성화
+                "-XX:+TieredCompilation",
+                // 문자열 중복 제거 활성화
+                "-XX:+UseStringDeduplication",
+                // SoftReference Least Recently Used(LRU, 최소 최근 사용) 정책을 조정, 50밀리초 동안 소프트 레퍼런스 유지
+//                "-XX:SoftRefLRUPolicyMSPerMB=50",
+                // JVM 코드 캐시의 최대 크기를 지정
+//                "-XX:ReservedCodeCacheSize=512m",
+                // 코드 캐시를 비울 수 있도록 허용
+//                "-XX:+UseCodeCacheFlushing",
+
+                // 빠른 난수 생성
+                "-Djava.security.egd=file:/dev/./urandom",
+
+                "-Djasypt.encryptor.password=" + System.getenv("JASYPT_ENCRYPTOR_PASSWORD")
+        )
+        ports = ["8020"]
+    }
+}

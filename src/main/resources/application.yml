@@ -1,0 +1,123 @@
+server:
+  port: 8020
+  error:
+    whitelabel:
+      enabled: false
+  compression:
+    enabled: true
+  http2:
+    enabled: true
+  servlet:
+    encoding:
+      force-response: true
+
+spring:
+  main:
+    banner-mode: OFF
+
+  application:
+    name: hermes
+
+  output:
+    ansi:
+      enabled: always
+
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 50MB
+      max-request-size: 50MB
+
+  datasource:
+    hikari:
+      jdbc-url: ENC(127acm4qpu8mo4wONis4dszUOFT9wlBQcDkYrGxkCpnTBxfINT5jjeqxaBVS+nkUTA+ec5rp0Us0uqtUEeVkhQxVoJaHCxhP0qE5JcYJBBNPpoMXKtrAvdOggFrGl0DfTfF1pVHp/3LaDAszRXcBzqgV+ALxZRBVKzKs3ZOuYmI=)
+      username: ENC(zAkz8qt+/su4PZEUWdGvutZhlbJ9yysFK0J5ffWlZvY0XYdtNuOAHG364cA2R9z1)
+      password: ENC(AJXDwi7F13yehS029XPMRjXKSivVVbDNVA+3YrnvEMRxXpSUePjhWcCibigpf/ee)
+      driver-class-name: org.postgresql.Driver
+      minimum-idle: 10
+      maximum-pool-size: 20
+      pool-name: HERMES-HIKARI-POOL
+
+  jpa:
+    hibernate:
+      ddl-auto: none
+    open-in-view: false
+    generate-ddl: false
+    properties:
+      hibernate:
+        format_sql: false
+        show_sql: false
+        naming:
+          implicit-strategy: org.hibernate.boot.model.naming.ImplicitNamingStrategyLegacyJpaImpl
+          physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+        jdbc:
+          batch_size: 100
+          order_inserts: true
+          order_updates: true
+          time_zone: Asia/Seoul
+
+  data:
+    web:
+      pageable:
+        one-indexed-parameters: true
+
+    redis:
+      username: ENC(DLw1snOP2J0iksWgBaxGuMh43AO4te9o9SeUbe3+u1r0iVukKvVnJqCVJETXn/ah)
+      password: ENC(LOHGTz9fYg2pzRoZy7lytECM9eB9ZPr3RxWTrZpHkKH0z/wk+TneCVraEl2iXrcyXLi3DttmS19+TJiAb8qX1h9DJdeVLMG1EV2Vk8m+8IU=)
+      host: ENC(5vbkQCPIFatsrEziv0Vt4un05p+/wS0R7LevpPSXaSls5gtHmS80d2WHg94QhpDOCLtDrZg4Gi1YQj0qir4aOCcgaym9BrN87JJ1D4mbGz+Y4izKPzFWNLoMUiddZL0i)
+      port: ENC(9UxwmaWdGz0twlrWqgrHdSowcwQuIl0fMugvUXP3AWPJ7/XM2w65gBJDcOOekvAo)
+      lettuce:
+        pool:
+          min-idle: 3
+          max-idle: 10
+          max-active: 10
+      timeout: 2000
+
+  cache:
+    type: redis
+    redis:
+      time-to-live: 1800000
+      cache-null-values: false
+
+  mail:
+    host: ENC(9RKY0EvR+H+sXwFz7a3ga6Am5t0AJdY8g6Nr6AodxLW0dj0b+mhh3L/dYpdXENM21rDSQawGqlRZQKYyd/vXggKzGKvYArx7D2cMOQtmSjE=)
+    port: ENC(eRgFvynyK+Vp/Ysdve9LydPdnkDe+LvJDLjz1oj7PJRcba6iXFp8UXHTxaq2ReT7)
+    username: ENC(SdYhGVxcQJfaOeie1M2My7+SqxvalV3S10V5A7uQhcqzWlT7AWH7wpLa3kAIihmMa5mkCrR8jw90Kpo1lUN9CbOrzI0vRMRyELyxwL+7oPQ/YEoZvt1Y5ZX/21dlG2GJil1a0tqZaICVMXo3oPZ/bKTEM/7k7QIuwqJQAh5ythIhHsWe4U8AkNJf3IjRb8zxu2AMxHx7sAG7WNnTa/vwXmCqfSctveW+ulQCSAuNr4isaZjkThVfRjHqpvwpQn/6GuR9ndU8XTg2eKistRYn8Q==)
+    password: ENC(cyj2ee95yoxlu29TPTRIq+J0yrd8DqP+mvJZgz1RbXTnuRiwodBm70toImgZHv9OL7zwgle+U09bVYqiiry8iA==)
+    properties:
+      mail:
+        smtp:
+          auth: true
+          timeout: 5000
+          writetimeout: 5000
+          connectiontimeout: 5000
+          starttls:
+            enable: true
+            required: true
+
+logging:
+  config: classpath:/logback/spring-logback.xml
+
+# 캐시 워밍업 설정
+hermes:
+  cache:
+    warmup:
+      enabled: true
+      delay-seconds: 2  # 애플리케이션 시작 후 워밍업 지연 시간
+      frequent-settings:
+        - daily_limit
+        - max_retry_count
+        - retry_delay_minutes
+        - batch_size
+        - from_address
+      frequent-templates:
+        - welcome
+        - password_reset
+        - verification
+        - notification
+
+jasypt:
+  encryptor:
+    algorithm: PBEWITHHMACSHA512ANDAES_256
+    key-obtention-iterations: 10000
+    pool-size: 1

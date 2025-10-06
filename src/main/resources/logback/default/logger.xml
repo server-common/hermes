@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<included>
+  <logger name="com.hermes" level="INFO"/>
+  <logger name="org.springframework.mail" level="INFO"/>
+  <logger name="com.zaxxer.hikari.pool.HikariPool" level="DEBUG"/>
+
+  <logger name="org.hibernate.loader" level="OFF"/>
+  <logger name="org.hibernate.hql.internal" level="OFF"/>
+  <logger name="org.hibernate.engine.internal" level="OFF"/>
+  <logger name="org.hibernate.engine.loading.internal" level="OFF"/>
+  <logger name="org.hibernate.internal.util.EntityPrinter" level="OFF"/>
+  <logger name="org.hibernate.orm.connections.pooling" level="OFF"/>
+</included>
