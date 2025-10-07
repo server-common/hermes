@@ -41,7 +41,7 @@ deploy:
     - echo "Docker pull 완료"
     - docker stop hermes || true && docker rm -f hermes || true
     - echo "Docker Container 정지, 제거 완료"
-    - docker run -d -p 8050:8050 --restart=unless-stopped --name hermes $IMAGE_PATH
+    - docker run -d -p 8020:8020 --restart=unless-stopped --name hermes $IMAGE_PATH
     - echo "Docker Container 실행 완료"
     - docker system prune -f
     - echo "Docker 불필요 리소스 제거 완료"
