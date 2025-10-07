@@ -1,0 +1,52 @@
+variables:
+  JIB_IMAGE: $CI_REGISTRY_IMAGE:$CI_COMMIT_BRANCH-$CI_COMMIT_SHORT_SHA
+
+default:
+  interruptible: true
+
+stages:
+  - build
+  - deploy
+
+build:
+  stage: build
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+  cache:
+    key: ${CI_COMMIT_REF_NAME}
+    paths:
+      - build
+      - .gradle/wrapper
+      - .gradle/caches
+    policy: pull-push
+  script:
+    - echo "jib 실행"
+    - ./gradlew jib --no-daemon
+    - echo "jib 완료"
+  tags:
+    - shared-ubuntu
+
+deploy:
+  stage: deploy
+  needs: [ build ]
+  variables:
+    IMAGE_PATH: $CI_REGISTRY_IMAGE:latest
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+  before_script:
+    - docker login $CI_REGISTRY -u $TOKEN_USER --password $TOKEN_PWD
+  script:
+    - echo "Docker pull 시작"
+    - docker pull $IMAGE_PATH
+    - echo "Docker pull 완료"
+    - docker stop hermes || true && docker rm -f hermes || true
+    - echo "Docker Container 정지, 제거 완료"
+    - docker run -d -p 8050:8050 --restart=unless-stopped --name hermes $IMAGE_PATH
+    - echo "Docker Container 실행 완료"
+    - docker system prune -f
+    - echo "Docker 불필요 리소스 제거 완료"
+    - echo "Docker 작업 완료"
+  after_script:
+    - docker logout
+  tags:
+    - shared-ubuntu
