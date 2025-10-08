@@ -1,15 +1,17 @@
 package com.hermes.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import java.time.LocalDateTime;
 import java.util.List;
 
 public record BulkMailResponse(
-    String batchId,           // 배치 처리 ID
-    int totalCount,           // 전체 발송 요청 수
-    int successCount,         // 성공적으로 큐에 등록된 수
-    int failedCount,          // 실패한 수
-    List<BulkMailResult> results,  // 개별 결과
-    LocalDateTime requestedAt      // 요청 시간
+    String batchId,                 // 배치 처리 ID
+    int totalCount,                 // 전체 발송 요청 수
+    int successCount,               // 성공적으로 큐에 등록된 수
+    int failedCount,                // 실패한 수
+    List<BulkMailResult> results,   // 개별 결과
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss.SSS")
+    LocalDateTime requestedAt       // 요청 시간
 ) {
 
     public static BulkMailResponse of(String batchId, List<BulkMailResult> results) {

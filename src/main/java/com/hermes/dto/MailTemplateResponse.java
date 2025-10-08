@@ -1,5 +1,6 @@
 package com.hermes.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.hermes.entity.MailTemplate;
 import java.time.LocalDateTime;
 
@@ -9,7 +10,9 @@ public record MailTemplateResponse(
     String subject,
     String content,
     Boolean isHtml,
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss.SSS")
     LocalDateTime createdAt,
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss.SSS")
     LocalDateTime updatedAt
 ) {
 

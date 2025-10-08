@@ -1,5 +1,6 @@
 package com.hermes.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.hermes.entity.BulkMailBatch;
 import java.time.LocalDateTime;
 
@@ -12,7 +13,9 @@ public record BulkMailStatusResponse(
     Double successRate,
     BulkMailBatch.BatchStatus status,
     String templateName,
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss.SSS")
     LocalDateTime createdAt,
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss.SSS")
     LocalDateTime completedAt,
     Long processingTimeSeconds  // 처리 시간 (초)
 ) {
