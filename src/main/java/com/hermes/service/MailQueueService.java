@@ -36,26 +36,34 @@ public class MailQueueService {
     }
 
     /**
-     * 큐에서 메일을 꺼내서 처리 (스케줄러로 주기적 실행)
+     * 큐에서 메일을 꺼내서 처리 (스케줄러로 주기적 실행) 대량 발송을 위해 배치 처리 지원
      */
-    @Scheduled(cron = "0/2 * * * * *") // 2초
+//    @Scheduled(cron = "0/2 * * * * *") // 2초
+    @Scheduled(fixedDelay = 2, initialDelay = 3, timeUnit = TimeUnit.SECONDS) // 2초
     public void processMailQueue() {
         try {
-            // 큐에서 메일 ID를 하나씩 꺼내기 (FIFO)
-            Object mailLogId = redisTemplate.opsForList().leftPop(MAIL_QUEUE_KEY);
+            // 배치 크기 설정에서 가져오기 (기본값: 10)
+            int batchSize = mailSettingService.getSettingValueAsInt("batch_size", 10);
 
-            if (mailLogId != null) {
+            // 배치 단위로 메일 처리
+            for (int i = 0; i < batchSize; i++) {
+                Object mailLogId = redisTemplate.opsForList().leftPop(MAIL_QUEUE_KEY);
+
+                if (mailLogId == null) {
+                    break; // 큐가 비어있으면 종료
+                }
+
                 Long id = parseLongSafely(mailLogId.toString());
                 if (id == null) {
                     log.warn("잘못된 메일 ID 형식: {}", mailLogId);
-                    return;
+                    continue;
                 }
 
                 // 처리 중 큐에 추가 (중복 처리 방지)
                 redisTemplate.opsForSet().add(MAIL_PROCESSING_KEY, id);
                 redisTemplate.expire(MAIL_PROCESSING_KEY, 10, TimeUnit.MINUTES);
 
-                log.info("메일 전송 처리 시작: ID = {}", id);
+                log.debug("메일 전송 처리 시작: ID = {}", id);
                 processMailSending(id);
 
                 // 처리 완료 후 처리 중 큐에서 제거

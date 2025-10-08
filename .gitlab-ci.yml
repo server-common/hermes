@@ -26,27 +26,27 @@ build:
   tags:
     - shared-ubuntu
 
-deploy:
-  stage: deploy
-  needs: [ build ]
-  variables:
-    IMAGE_PATH: $CI_REGISTRY_IMAGE:latest
-  rules:
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
-  before_script:
-    - docker login $CI_REGISTRY -u $TOKEN_USER --password $TOKEN_PWD
-  script:
-    - echo "Docker pull 시작"
-    - docker pull $IMAGE_PATH
-    - echo "Docker pull 완료"
-    - docker stop hermes || true && docker rm -f hermes || true
-    - echo "Docker Container 정지, 제거 완료"
-    - docker run -d -p 8020:8020 --restart=unless-stopped --name hermes $IMAGE_PATH
-    - echo "Docker Container 실행 완료"
-    - docker system prune -f
-    - echo "Docker 불필요 리소스 제거 완료"
-    - echo "Docker 작업 완료"
-  after_script:
-    - docker logout
-  tags:
-    - shared-ubuntu
+#deploy:
+#  stage: deploy
+#  needs: [ build ]
+#  variables:
+#    IMAGE_PATH: $CI_REGISTRY_IMAGE:latest
+#  rules:
+#    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+#  before_script:
+#    - docker login $CI_REGISTRY -u $TOKEN_USER --password $TOKEN_PWD
+#  script:
+#    - echo "Docker pull 시작"
+#    - docker pull $IMAGE_PATH
+#    - echo "Docker pull 완료"
+#    - docker stop hermes || true && docker rm -f hermes || true
+#    - echo "Docker Container 정지, 제거 완료"
+#    - docker run -d -p 8020:8020 --restart=unless-stopped --name hermes $IMAGE_PATH
+#    - echo "Docker Container 실행 완료"
+#    - docker system prune -f
+#    - echo "Docker 불필요 리소스 제거 완료"
+#    - echo "Docker 작업 완료"
+#  after_script:
+#    - docker logout
+#  tags:
+#    - shared-ubuntu

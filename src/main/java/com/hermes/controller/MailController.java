@@ -2,6 +2,10 @@ package com.hermes.controller;
 
 import com.hermes.common.dto.HermesPageRequest;
 import com.hermes.common.dto.HermesPageResponse;
+import com.hermes.dto.BulkMailRequest;
+import com.hermes.dto.BulkMailResponse;
+import com.hermes.dto.BulkMailStatusResponse;
+import com.hermes.dto.BulkTemplateMailRequest;
 import com.hermes.dto.MailRequest;
 import com.hermes.dto.MailResponse;
 import com.hermes.dto.TemplateMailRequest;
@@ -62,5 +66,23 @@ public class MailController {
     public ResponseEntity<MailQueueService.QueueStatus> getQueueStatus() {
         MailQueueService.QueueStatus status = mailService.getQueueStatus();
         return ResponseEntity.ok(status);
+    }
+
+    @PostMapping("/send/bulk")
+    public ResponseEntity<BulkMailResponse> sendBulkMail(@Valid @RequestBody BulkMailRequest request) {
+        BulkMailResponse response = mailService.sendBulkMail(request);
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/send/bulk/template")
+    public ResponseEntity<BulkMailResponse> sendBulkTemplatedMail(@Valid @RequestBody BulkTemplateMailRequest request) {
+        BulkMailResponse response = mailService.sendBulkTemplatedMail(request);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/bulk/status/{batchId}")
+    public ResponseEntity<BulkMailStatusResponse> getBulkMailStatus(@PathVariable String batchId) {
+        BulkMailStatusResponse response = mailService.getBulkMailBatchStatus(batchId);
+        return ResponseEntity.ok(response);
     }
 }

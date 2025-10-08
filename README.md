@@ -1,11 +1,11 @@
 # Hermes - 메일 전송 시스템
 
-Spring Boot 3.5.4, Java 21, Gradle을 사용한 메일 전송 시스템입니다.
+Spring Boot 3.5.4, Java 17, Gradle을 사용한 메일 전송 시스템입니다.
 Hermes는 그리스 신화의 전령의 신으로, 빠르고 안정적인 메시지 전달을 상징합니다.
 
 ## 기술 스택
 
-- **Java 21**
+- **Java 17**
 - **Spring Boot 3.5.4**
 - **Gradle 8.14**
 - **Lombok** - 보일러플레이트 코드 제거
@@ -16,9 +16,12 @@ Hermes는 그리스 신화의 전령의 신으로, 빠르고 안정적인 메시
 ## 주요 기능
 
 - 비동기 메일 전송
+- **대량 메일 발송** - 최대 1,000명까지 한 번에 발송 가능
+- **배치 처리** - 큐 처리 성능 최적화를 위한 배치 단위 처리
 - Redis를 이용한 메일 큐잉
 - PostgreSQL을 이용한 메일 로그 관리
 - **메일 템플릿 시스템** - 변수 치환 지원
+- **개인화 메일** - 수신자별 개별 변수 치환
 - **시스템 설정 관리** - 전송 제한, 재시도 설정 등
 - **Redis 캐시 시스템** - 설정값 및 템플릿 캐싱으로 성능 최적화
 - **자동 캐시 워밍업** - 애플리케이션 시작 시 자주 사용되는 데이터 미리 로드
@@ -53,6 +56,79 @@ Content-Type: application/json
     "name": "홍길동",
     "company": "Hermes Corp"
   }
+}
+```
+
+### 대량 메일 전송
+```http
+POST /mail/send/bulk
+Content-Type: application/json
+
+{
+  "recipients": [
+    {
+      "to": "user1@example.com",
+      "name": "홍길동"
+    },
+    {
+      "to": "user2@example.com", 
+      "name": "김철수"
+    }
+  ],
+  "subject": "{{name}}님께 드리는 공지사항",
+  "content": "<h1>안녕하세요 {{name}}님!</h1><p>중요한 공지사항을 전달드립니다.</p>",
+  "isHtml": true
+}
+```
+
+### 대량 템플릿 메일 전송
+```http
+POST /mail/send/bulk/template
+Content-Type: application/json
+
+{
+  "recipients": [
+    {
+      "to": "user1@example.com",
+      "variables": {
+        "name": "홍길동",
+        "company": "ABC Corp",
+        "position": "개발자"
+      }
+    },
+    {
+      "to": "user2@example.com",
+      "variables": {
+        "name": "김철수", 
+        "company": "XYZ Corp",
+        "position": "디자이너"
+      }
+    }
+  ],
+  "templateName": "welcome"
+}
+
+# 응답 예시
+{
+  "batchId": "BULK_A1B2C3D4",
+  "totalCount": 2,
+  "successCount": 2,
+  "failedCount": 0,
+  "results": [
+    {
+      "to": "user1@example.com",
+      "success": true,
+      "mailLogId": 123,
+      "errorMessage": null
+    },
+    {
+      "to": "user2@example.com", 
+      "success": true,
+      "mailLogId": 124,
+      "errorMessage": null
+    }
+  ],
+  "requestedAt": "2025-10-08T10:30:00"
 }
 ```
 
@@ -136,6 +212,27 @@ GET /mail/queue/status
   "pendingCount": 15,     # 대기 중인 메일 수
   "processingCount": 3,   # 처리 중인 메일 수
   "retryCount": 2         # 재시도 대기 중인 메일 수
+}
+```
+
+### 대량 발송 상태 조회
+```http
+# 배치 상태 조회
+GET /mail/bulk/status/{batchId}
+
+# 응답 예시
+{
+  "id": 1,
+  "batchId": "BULK_A1B2C3D4",
+  "totalCount": 1000,
+  "successCount": 995,
+  "failedCount": 5,
+  "successRate": 99.5,
+  "status": "COMPLETED",
+  "templateName": "welcome",
+  "createdAt": "2025-10-08T10:30:00",
+  "completedAt": "2025-10-08T10:35:00",
+  "processingTimeSeconds": 300
 }
 ```
 
@@ -289,7 +386,66 @@ hermes:
       frequent-settings:
         - daily_limit
         - max_retry_count
+        - batch_size
       frequent-templates:
         - welcome
         - notification
+```
+
+## 대량 발송 시스템
+
+### 주요 특징
+- **최대 1,000명** 동시 발송 지원
+- **배치 ID** 추적으로 발송 상태 관리
+- **개별 결과** 제공 (성공/실패 상세 정보)
+- **개인화 지원** - 수신자별 변수 치환
+- **일일 제한** 자동 체크
+- **실패 처리** - 개별 실패 시에도 나머지 발송 계속
+
+### 성능 최적화
+- **배치 처리**: `batch_size` 설정으로 큐 처리 성능 조절
+- **비동기 처리**: 대량 발송 요청 즉시 응답
+- **메모리 효율**: 스트림 처리로 메모리 사용량 최적화
+
+### 권장 설정값
+```http
+POST /mail/setting
+{
+  "settingKey": "batch_size",
+  "settingValue": "20",
+  "description": "큐 처리 시 배치 크기 (기본: 10)"
+}
+```
+
+### 사용 예시
+
+#### 1. 단순 대량 발송
+```json
+{
+  "recipients": [
+    {"to": "user1@example.com", "name": "홍길동"},
+    {"to": "user2@example.com", "name": "김철수"}
+  ],
+  "subject": "{{name}}님께 드리는 안내",
+  "content": "안녕하세요 {{name}}님, 중요한 공지사항입니다.",
+  "isHtml": false
+}
+```
+
+#### 2. 복잡한 템플릿 대량 발송
+```json
+{
+  "recipients": [
+    {
+      "to": "user1@example.com",
+      "variables": {
+        "name": "홍길동",
+        "company": "ABC Corp",
+        "expiry_date": "2025-12-31",
+        "discount": "20%"
+      }
+    }
+  ],
+  "templateName": "promotion"
+}
 ```

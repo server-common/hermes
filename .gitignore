@@ -3,3 +3,4 @@
 /.vscode/
 /build/
 /src/test/java/com/hermes/service/exclude/
+.DS_Store
