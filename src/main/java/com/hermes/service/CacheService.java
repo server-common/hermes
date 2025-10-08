@@ -27,9 +27,22 @@ public class CacheService {
     /**
      * 모든 캐시 삭제
      */
-    @CacheEvict(value = {"mailSetting", "mailSettingValue", "mailTemplate"}, allEntries = true)
+    @CacheEvict(value = {"mailSetting", "mailSettingValue"}, allEntries = true)
     public void evictAllCache() {
         log.info("모든 캐시를 삭제했습니다.");
+
+        // 추가적으로 캐시 매니저를 통한 직접 삭제
+        try {
+            for (String cacheName : cacheManager.getCacheNames()) {
+                var cache = cacheManager.getCache(cacheName);
+                if (cache != null) {
+                    cache.clear();
+                    log.debug("캐시 직접 삭제: {}", cacheName);
+                }
+            }
+        } catch (Exception e) {
+            log.warn("캐시 직접 삭제 중 오류: {}", e.getMessage());
+        }
     }
 
     /**
@@ -38,14 +51,6 @@ public class CacheService {
     @CacheEvict(value = {"mailSetting", "mailSettingValue"}, allEntries = true)
     public void evictMailSettingCache() {
         log.info("메일 설정 캐시를 삭제했습니다.");
-    }
-
-    /**
-     * 메일 템플릿 캐시만 삭제
-     */
-    @CacheEvict(value = "mailTemplate", allEntries = true)
-    public void evictMailTemplateCache() {
-        log.info("메일 템플릿 캐시를 삭제했습니다.");
     }
 
     /**
@@ -71,9 +76,14 @@ public class CacheService {
 
             // 잠시 대기 후 캐시 워밍업
             Thread.sleep(1000);
+
+            // 캐시 워밍업
             warmUpCache();
 
             log.info("손상된 캐시 데이터 정리 및 재구성 완료");
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            log.warn("캐시 정리 중 인터럽트 발생");
         } catch (Exception e) {
             log.error("캐시 정리 중 오류 발생: {}", e.getMessage());
         }

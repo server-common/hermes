@@ -27,7 +27,6 @@ public class CacheInitializer implements ApplicationRunner {
 
     @EventListener(ApplicationReadyEvent.class)
     public void onApplicationReady() {
-        // 손상된 캐시 정리
         try {
             cacheService.evictAllCache();
             log.info("캐시 초기화 완료");

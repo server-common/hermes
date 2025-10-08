@@ -183,9 +183,6 @@ DELETE /cache/all
 # 메일 설정 캐시만 삭제
 DELETE /cache/mail-settings
 
-# 메일 템플릿 캐시만 삭제
-DELETE /cache/mail-template
-
 # 특정 캐시 키 삭제
 DELETE /cache/{cacheName}/{key}
 

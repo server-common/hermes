@@ -12,8 +12,6 @@ import com.hermes.repository.MailTemplateRepository;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,7 +24,6 @@ public class MailTemplateService {
     private final MailTemplateRepository mailTemplateRepository;
 
     @Transactional
-    @CacheEvict(value = "mailTemplate", allEntries = true)
     public MailTemplateResponse createTemplate(MailTemplateRequest request) {
         validateTemplateNameUniqueness(request.name(), null);
 
@@ -38,7 +35,6 @@ public class MailTemplateService {
     }
 
     @Transactional
-    @CacheEvict(value = "mailTemplate", allEntries = true)
     public MailTemplateResponse updateTemplate(Long id, MailTemplateRequest request) {
         MailTemplate template = getTemplateById(id);
         validateTemplateNameUniqueness(request.name(), template.getName());
@@ -51,7 +47,6 @@ public class MailTemplateService {
     }
 
     @Transactional
-    @CacheEvict(value = "mailTemplate", allEntries = true)
     public void deleteTemplate(Long id) {
         MailTemplate template = getTemplateById(id);
         mailTemplateRepository.delete(template);
@@ -59,13 +54,11 @@ public class MailTemplateService {
     }
 
     @Transactional(readOnly = true)
-    @Cacheable(value = "mailTemplate", key = "#id")
     public MailTemplateResponse getTemplate(Long id) {
         return MailTemplateResponse.from(getTemplateById(id));
     }
 
     @Transactional(readOnly = true)
-    @Cacheable(value = "mailTemplate", key = "'name:' + #name")
     public MailTemplateResponse getTemplateByName(String name) {
         MailTemplate template = mailTemplateRepository.findByName(name).orElseThrow(() -> new ResourceNotFoundException("템플릿", name));
         return MailTemplateResponse.from(template);

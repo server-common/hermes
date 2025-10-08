@@ -27,33 +27,28 @@ public class CacheConfig {
 
     @Bean
     public CacheManager cacheManager(RedisConnectionFactory connectionFactory) {
-        // Redis 직렬화 설정
-        GenericJackson2JsonRedisSerializer serializer = new GenericJackson2JsonRedisSerializer(redisObjectMapper);
+        // 단순한 JSON 직렬화 - 타입 정보 없이 안전하게 처리
+        GenericJackson2JsonRedisSerializer genericJackson2JsonRedisSerializer = new GenericJackson2JsonRedisSerializer(redisObjectMapper);
 
         // 기본 캐시 설정 - 30분 TTL
         RedisCacheConfiguration defaultConfig = RedisCacheConfiguration.defaultCacheConfig()
             .entryTtl(Duration.ofMinutes(30))
             .serializeKeysWith(RedisSerializationContext.SerializationPair.fromSerializer(new StringRedisSerializer()))
-            .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(serializer))
-            .disableCachingNullValues();
+            .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(genericJackson2JsonRedisSerializer))
+            .disableCachingNullValues()
+            // 캐시 키 접두사 설정으로 네임스페이스 분리
+            .computePrefixWith(cacheName -> "hermes:cache:" + cacheName + ":");
 
         // 캐시별 개별 설정
         Map<String, RedisCacheConfiguration> cacheConfigurations = new HashMap<>();
 
         // 메일 설정 캐시 - 1시간 TTL
         cacheConfigurations.put("mailSetting", defaultConfig
-            .entryTtl(Duration.ofHours(1))
-            .prefixCacheNameWith("hermes:cache:"));
+            .entryTtl(Duration.ofHours(1)));
 
         // 메일 설정 값 캐시 - 30분 TTL
         cacheConfigurations.put("mailSettingValue", defaultConfig
-            .entryTtl(Duration.ofMinutes(30))
-            .prefixCacheNameWith("hermes:cache:"));
-
-        // 메일 템플릿 캐시 - 2시간 TTL
-        cacheConfigurations.put("mailTemplate", defaultConfig
-            .entryTtl(Duration.ofHours(2))
-            .prefixCacheNameWith("hermes:cache:"));
+            .entryTtl(Duration.ofMinutes(30)));
 
         return RedisCacheManager.builder(connectionFactory)
             .cacheDefaults(defaultConfig)

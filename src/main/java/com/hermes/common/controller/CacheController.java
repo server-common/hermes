@@ -36,15 +36,6 @@ public class CacheController {
     }
 
     /**
-     * 메일 템플릿 캐시 삭제
-     */
-    @DeleteMapping("/mail-template")
-    public ResponseEntity<Map<String, String>> evictMailTemplateCache() {
-        cacheService.evictMailTemplateCache();
-        return ResponseEntity.ok(Map.of("message", "메일 템플릿 캐시가 삭제되었습니다."));
-    }
-
-    /**
      * 특정 캐시 키 삭제
      */
     @DeleteMapping("/{cacheName}/{key}")
