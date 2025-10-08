@@ -125,12 +125,13 @@ public class MailService {
 
         for (var recipient : request.recipients()) {
             try {
-                // 개인화된 내용 생성 (이름이 있는 경우)
-                String personalizedContent = personalizeContent(request.content(), recipient.name());
+                // 개인화된 제목과 내용 생성 (이름이 있는 경우)
+                String personalizedSubject = personalize(request.subject(), recipient.name());
+                String personalizedContent = personalize(request.content(), recipient.name());
 
                 // 메일 로그 생성 및 큐에 추가
                 MailLog savedMailLog = mailLogRepository.save(
-                    new MailLog(recipient.to(), request.subject(), personalizedContent)
+                    new MailLog(recipient.to(), personalizedSubject, personalizedContent)
                 );
 
                 mailQueueService.enqueueMailForSending(savedMailLog.getId());
@@ -160,8 +161,7 @@ public class MailService {
     @Transactional
     public BulkMailResponse sendBulkTemplatedMail(BulkTemplateMailRequest request) {
         String batchId = generateBatchId();
-        log.info("대량 템플릿 메일 발송 시작: batchId={}, 템플릿={}, 수신자 수={}",
-            batchId, request.templateName(), request.recipients().size());
+        log.info("대량 템플릿 메일 발송 시작: batchId={}, 템플릿={}, 수신자 수={}", batchId, request.templateName(), request.recipients().size());
 
         // 일일 제한 체크
         checkBulkDailyLimit(request.recipients().size());
@@ -240,12 +240,12 @@ public class MailService {
     /**
      * 내용 개인화 (이름이 있는 경우)
      */
-    private String personalizeContent(String content, String name) {
+    private String personalize(String text, String name) {
         if (name != null && !name.trim().isEmpty()) {
             // 간단한 개인화: {{name}} 치환
-            return content.replace("{{name}}", name);
+            return text.replace("{{name}}", name);
         }
-        return content;
+        return text;
     }
 
     /**
