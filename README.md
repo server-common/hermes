@@ -1,13 +1,13 @@
 # Hermes - 메일 전송 시스템
 
-Spring Boot 3.5.4, Java 17, Gradle을 사용한 메일 전송 시스템입니다.
+Spring Boot 3.5.4, Java 21, Gradle을 사용한 메일 전송 시스템입니다.
 Hermes는 그리스 신화의 전령의 신으로, 빠르고 안정적인 메시지 전달을 상징합니다.
 
 ## 기술 스택
 
-- **Java 17**
+- **Java 21**
 - **Spring Boot 3.5.4**
-- **Gradle 8.14**
+- **Gradle 9.1.0**
 - **Lombok** - 보일러플레이트 코드 제거
 - **PostgreSQL** - 메일 로그 저장
 - **Redis** - 메일 큐잉 및 캐싱
