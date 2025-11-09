@@ -1,31 +1,31 @@
-variables:
-  JIB_IMAGE: $CI_REGISTRY_IMAGE:$CI_COMMIT_BRANCH-$CI_COMMIT_SHORT_SHA
-
-default:
-  interruptible: true
-
-stages:
-  - build
-  - deploy
-
-build:
-  stage: build
-  rules:
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
-  cache:
-    key: ${CI_COMMIT_REF_NAME}
-    paths:
-      - build
-      - .gradle/wrapper
-      - .gradle/caches
-    policy: pull-push
-  script:
-    - echo "jib 실행"
-    - ./gradlew jib --no-daemon
-    - echo "jib 완료"
-  tags:
-    - shared-ubuntu
-
+#variables:
+#  JIB_IMAGE: $CI_REGISTRY_IMAGE:$CI_COMMIT_BRANCH-$CI_COMMIT_SHORT_SHA
+#
+#default:
+#  interruptible: true
+#
+#stages:
+#  - build
+#  - deploy
+#
+#build:
+#  stage: build
+#  rules:
+#    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+#  cache:
+#    key: ${CI_COMMIT_REF_NAME}
+#    paths:
+#      - build
+#      - .gradle/wrapper
+#      - .gradle/caches
+#    policy: pull-push
+#  script:
+#    - echo "jib 실행"
+#    - ./gradlew jib --no-daemon
+#    - echo "jib 완료"
+#  tags:
+#    - shared-ubuntu
+#
 #deploy:
 #  stage: deploy
 #  needs: [ build ]
