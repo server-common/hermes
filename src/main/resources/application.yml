@@ -110,6 +110,7 @@ hermes:
         - retry_delay_minutes
         - batch_size
         - from_address
+        - from_name
       frequent-templates:
         - welcome
         - password_reset

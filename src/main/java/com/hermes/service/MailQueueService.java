@@ -3,7 +3,9 @@ package com.hermes.service;
 import com.hermes.entity.MailLog;
 import com.hermes.repository.MailLogRepository;
 import jakarta.mail.MessagingException;
+import jakarta.mail.internet.InternetAddress;
 import jakarta.mail.internet.MimeMessage;
+import java.io.UnsupportedEncodingException;
 import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -103,10 +105,12 @@ public class MailQueueService {
     /**
      * 실제 메일 전송
      */
-    private void sendMail(MailLog mailLog) throws MessagingException {
+    private void sendMail(MailLog mailLog) throws MessagingException, UnsupportedEncodingException {
         MimeMessage message = mailSender.createMimeMessage();
 
-        message.setFrom(mailSettingService.getSettingValue("from_address"));
+        String sender = mailSettingService.getSettingValue("from_address");
+        String senderName = mailSettingService.getSettingValue("from_name");
+        message.setFrom(new InternetAddress(sender, senderName, "UTF-8"));
         message.setRecipients(MimeMessage.RecipientType.TO, mailLog.getRecipient());
         message.setSubject(mailLog.getSubject());
         message.setText(mailLog.getContent(), "UTF-8", "html");
