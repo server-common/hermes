@@ -44,8 +44,8 @@ public class MailQueueService {
     @Scheduled(fixedDelay = 2, initialDelay = 3, timeUnit = TimeUnit.SECONDS) // 2초
     public void processMailQueue() {
         try {
-            // 배치 크기 설정에서 가져오기 (기본값: 10)
-            int batchSize = mailSettingService.getSettingValueAsInt("batch_size", 10);
+            // 배치 크기 (그룹 컨텍스트가 없으므로 안전한 기본값 사용)
+            int batchSize = 10;
 
             // 배치 단위로 메일 처리
             for (int i = 0; i < batchSize; i++) {
@@ -108,8 +108,8 @@ public class MailQueueService {
     private void sendMail(MailLog mailLog) throws MessagingException, UnsupportedEncodingException {
         MimeMessage message = mailSender.createMimeMessage();
 
-        String sender = mailSettingService.getSettingValue("from_address");
-        String senderName = mailSettingService.getSettingValue("from_name");
+        String sender = mailSettingService.getSettingValue(mailLog.getGroupKey(), "from_address");
+        String senderName = mailSettingService.getSettingValue(mailLog.getGroupKey(), "from_name");
         message.setFrom(new InternetAddress(sender, senderName, "UTF-8"));
         message.setRecipients(MimeMessage.RecipientType.TO, mailLog.getRecipient());
         message.setSubject(mailLog.getSubject());
@@ -129,7 +129,7 @@ public class MailQueueService {
             }
 
             // 재시도 횟수 확인
-            int maxRetryCount = mailSettingService.getSettingValueAsInt("max_retry_count", 3);
+            int maxRetryCount = mailSettingService.getSettingValueAsInt(mailLog.getGroupKey(), "max_retry_count", 3);
             int currentRetryCount = getCurrentRetryCount(mailLogId);
 
             if (currentRetryCount < maxRetryCount) {
@@ -150,7 +150,15 @@ public class MailQueueService {
      * 재시도 스케줄링
      */
     private void scheduleRetry(Long mailLogId, int retryCount) {
-        int retryDelayMinutes = mailSettingService.getSettingValueAsInt("retry_delay_minutes", 5);
+        // mailLog에서 groupKey 조회 후 그룹별 설정 적용
+        MailLog mailLog = mailLogRepository.findById(mailLogId).orElse(null);
+        int retryDelayMinutes = 5;
+        if (mailLog != null && mailLog.getGroupKey() != null) {
+            try {
+                retryDelayMinutes = mailSettingService.getSettingValueAsInt(mailLog.getGroupKey(), "retry_delay_minutes", 5);
+            } catch (Exception ignored) {
+            }
+        }
         long delaySeconds = retryDelayMinutes * 60L;
 
         // 재시도 정보를 Redis에 저장

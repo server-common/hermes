@@ -8,5 +8,5 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface BulkMailBatchRepository extends JpaRepository<BulkMailBatch, Long> {
 
-    Optional<BulkMailBatch> findByBatchId(String batchId);
+    Optional<BulkMailBatch> findByBatchIdAndGroupKey(String batchId, String groupKey);
 }

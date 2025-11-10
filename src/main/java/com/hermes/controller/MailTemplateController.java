@@ -39,32 +39,37 @@ public class MailTemplateController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteTemplate(@PathVariable Long id) {
-        mailTemplateService.deleteTemplate(id);
+    public ResponseEntity<Void> deleteTemplate(@PathVariable Long id,
+        @org.springframework.web.bind.annotation.RequestParam String groupKey) {
+        mailTemplateService.deleteTemplate(id, groupKey);
         return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<MailTemplateResponse> getTemplate(@PathVariable Long id) {
-        MailTemplateResponse response = mailTemplateService.getTemplate(id);
+    public ResponseEntity<MailTemplateResponse> getTemplate(@PathVariable Long id,
+        @org.springframework.web.bind.annotation.RequestParam String groupKey) {
+        MailTemplateResponse response = mailTemplateService.getTemplate(id, groupKey);
         return ResponseEntity.ok(response);
     }
 
     @GetMapping("/name/{name}")
-    public ResponseEntity<MailTemplateResponse> getTemplateByName(@PathVariable String name) {
-        MailTemplateResponse response = mailTemplateService.getTemplateByName(name);
+    public ResponseEntity<MailTemplateResponse> getTemplateByName(@PathVariable String name,
+        @org.springframework.web.bind.annotation.RequestParam String groupKey) {
+        MailTemplateResponse response = mailTemplateService.getTemplateByName(name, groupKey);
         return ResponseEntity.ok(response);
     }
 
     @GetMapping
-    public ResponseEntity<HermesPageResponse<MailTemplateResponse>> getTemplates(@ModelAttribute @Valid HermesPageRequest hermesPageRequest) {
-        HermesPageResponse<MailTemplateResponse> templates = mailTemplateService.getTemplates(hermesPageRequest);
+    public ResponseEntity<HermesPageResponse<MailTemplateResponse>> getTemplates(@ModelAttribute @Valid HermesPageRequest hermesPageRequest,
+        @org.springframework.web.bind.annotation.RequestParam String groupKey) {
+        HermesPageResponse<MailTemplateResponse> templates = mailTemplateService.getTemplates(hermesPageRequest, groupKey);
         return ResponseEntity.ok(templates);
     }
 
     @GetMapping("/search")
-    public ResponseEntity<HermesPageResponse<MailTemplateResponse>> searchTemplates(@ModelAttribute @Valid HermesSearchRequest hermesSearchRequest) {
-        HermesPageResponse<MailTemplateResponse> templates = mailTemplateService.searchTemplates(hermesSearchRequest);
+    public ResponseEntity<HermesPageResponse<MailTemplateResponse>> searchTemplates(@ModelAttribute @Valid HermesSearchRequest hermesSearchRequest,
+        @org.springframework.web.bind.annotation.RequestParam String groupKey) {
+        HermesPageResponse<MailTemplateResponse> templates = mailTemplateService.searchTemplates(hermesSearchRequest, groupKey);
         return ResponseEntity.ok(templates);
     }
 }

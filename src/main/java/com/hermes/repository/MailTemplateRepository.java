@@ -1,6 +1,7 @@
 package com.hermes.repository;
 
 import com.hermes.entity.MailTemplate;
+import java.util.List;
 import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -12,12 +13,19 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface MailTemplateRepository extends JpaRepository<MailTemplate, Long> {
 
-    Optional<MailTemplate> findByName(String name);
+    Optional<MailTemplate> findByNameAndGroupKey(String name, String groupKey);
 
-    boolean existsByName(String name);
+    boolean existsByNameAndGroupKey(String name, String groupKey);
 
-    @Query("SELECT mt FROM MailTemplate mt WHERE " +
+    Page<MailTemplate> findByGroupKey(String groupKey, Pageable pageable);
+
+    Optional<MailTemplate> findByIdAndGroupKey(Long id, String groupKey);
+
+    @Query("SELECT mt FROM MailTemplate mt WHERE mt.groupKey = :groupKey AND (" +
         "LOWER(mt.name) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
-        "LOWER(mt.subject) LIKE LOWER(CONCAT('%', :keyword, '%'))")
-    Page<MailTemplate> findByKeyword(@Param("keyword") String keyword, Pageable pageable);
+        "LOWER(mt.subject) LIKE LOWER(CONCAT('%', :keyword, '%')))")
+    Page<MailTemplate> findByKeywordAndGroupKey(@Param("keyword") String keyword, @Param("groupKey") String groupKey, Pageable pageable);
+
+    @Query("SELECT DISTINCT mt.groupKey FROM MailTemplate mt WHERE mt.groupKey IS NOT NULL AND mt.groupKey <> ''")
+    List<String> findDistinctGroupKeys();
 }

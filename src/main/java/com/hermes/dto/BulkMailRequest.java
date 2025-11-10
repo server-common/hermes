@@ -19,7 +19,10 @@ public record BulkMailRequest(
     @NotBlank(message = "내용은 필수입니다")
     String content,
 
-    boolean isHtml
+    boolean isHtml,
+
+    @NotBlank(message = "groupKey는 필수입니다")
+    String groupKey
 ) {
 
 }

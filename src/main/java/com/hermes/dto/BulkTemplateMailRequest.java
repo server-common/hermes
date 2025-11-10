@@ -13,7 +13,10 @@ public record BulkTemplateMailRequest(
     List<BulkTemplateMailRecipient> recipients,
 
     @NotBlank(message = "템플릿 이름은 필수입니다")
-    String templateName
+    String templateName,
+
+    @NotBlank(message = "groupKey는 필수입니다")
+    String groupKey
 ) {
 
 }

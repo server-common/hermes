@@ -23,9 +23,14 @@ public class MailTemplateService {
 
     private final MailTemplateRepository mailTemplateRepository;
 
+    @Transactional(readOnly = true)
+    public java.util.List<String> getAllGroupKeysForTemplates() {
+        return mailTemplateRepository.findDistinctGroupKeys();
+    }
+
     @Transactional
     public MailTemplateResponse createTemplate(MailTemplateRequest request) {
-        validateTemplateNameUniqueness(request.name(), null);
+        validateTemplateNameUniqueness(request.name(), null, request.groupKey());
 
         MailTemplate template = buildTemplate(request);
         MailTemplate savedTemplate = mailTemplateRepository.save(template);
@@ -36,8 +41,8 @@ public class MailTemplateService {
 
     @Transactional
     public MailTemplateResponse updateTemplate(Long id, MailTemplateRequest request) {
-        MailTemplate template = getTemplateById(id);
-        validateTemplateNameUniqueness(request.name(), template.getName());
+        MailTemplate template = getTemplateById(id, request.groupKey());
+        validateTemplateNameUniqueness(request.name(), template.getName(), request.groupKey());
 
         updateTemplateFields(template, request);
         MailTemplate updatedTemplate = mailTemplateRepository.save(template);
@@ -47,32 +52,39 @@ public class MailTemplateService {
     }
 
     @Transactional
-    public void deleteTemplate(Long id) {
-        MailTemplate template = getTemplateById(id);
+    public void deleteTemplate(Long id, String groupKey) {
+        MailTemplate template = getTemplateById(id, groupKey);
         mailTemplateRepository.delete(template);
         log.info("메일 템플릿 삭제: {}", template.getName());
     }
 
     @Transactional(readOnly = true)
-    public MailTemplateResponse getTemplate(Long id) {
-        return MailTemplateResponse.from(getTemplateById(id));
+    public MailTemplateResponse getTemplate(Long id, String groupKey) {
+        return MailTemplateResponse.from(getTemplateById(id, groupKey));
     }
 
     @Transactional(readOnly = true)
     public MailTemplateResponse getTemplateByName(String name) {
-        MailTemplate template = mailTemplateRepository.findByName(name).orElseThrow(() -> new ResourceNotFoundException("템플릿", name));
+        throw new UnsupportedOperationException("Use getTemplateByName(name, groupKey)");
+    }
+
+    @Transactional(readOnly = true)
+    public MailTemplateResponse getTemplateByName(String name, String groupKey) {
+        MailTemplate template = mailTemplateRepository.findByNameAndGroupKey(name, groupKey)
+            .orElseThrow(() -> new ResourceNotFoundException("템플릿", name));
         return MailTemplateResponse.from(template);
     }
 
     @Transactional(readOnly = true)
-    public HermesPageResponse<MailTemplateResponse> getTemplates(HermesPageRequest hermesPageRequest) {
-        Page<MailTemplate> page = mailTemplateRepository.findAll(hermesPageRequest.toPageable());
+    public HermesPageResponse<MailTemplateResponse> getTemplates(HermesPageRequest hermesPageRequest, String groupKey) {
+        Page<MailTemplate> page = mailTemplateRepository.findByGroupKey(groupKey, hermesPageRequest.toPageable());
         return HermesPageResponse.from(page.map(MailTemplateResponse::from));
     }
 
     @Transactional(readOnly = true)
-    public HermesPageResponse<MailTemplateResponse> searchTemplates(HermesSearchRequest hermesSearchRequest) {
-        Page<MailTemplate> page = mailTemplateRepository.findByKeyword(hermesSearchRequest.keyword(), hermesSearchRequest.hermesPageRequest().toPageable());
+    public HermesPageResponse<MailTemplateResponse> searchTemplates(HermesSearchRequest hermesSearchRequest, String groupKey) {
+        Page<MailTemplate> page = mailTemplateRepository.findByKeywordAndGroupKey(
+            hermesSearchRequest.keyword(), groupKey, hermesSearchRequest.hermesPageRequest().toPageable());
         return HermesPageResponse.from(page.map(MailTemplateResponse::from));
     }
 
@@ -94,20 +106,27 @@ public class MailTemplateService {
     }
 
     // Private helper methods
-    private MailTemplate getTemplateById(Long id) {
-        return mailTemplateRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("템플릿", id.toString()));
+    private MailTemplate getTemplateById(Long id, String groupKey) {
+        return mailTemplateRepository.findByIdAndGroupKey(id, groupKey)
+            .orElseThrow(() -> new ResourceNotFoundException("템플릿", id.toString()));
     }
 
-    private void validateTemplateNameUniqueness(String newName, String currentName) {
+    private void validateTemplateNameUniqueness(String newName, String currentName, String groupKey) {
         if (currentName == null || !currentName.equals(newName)) {
-            if (mailTemplateRepository.existsByName(newName)) {
+            if (mailTemplateRepository.existsByNameAndGroupKey(newName, groupKey)) {
                 throw new DuplicateResourceException("템플릿 이름", newName);
             }
         }
     }
 
     private MailTemplate buildTemplate(MailTemplateRequest request) {
-        return MailTemplate.builder().name(request.name()).subject(request.subject()).content(request.content()).isHtml(request.isHtml()).build();
+        return MailTemplate.builder()
+            .groupKey(request.groupKey())
+            .name(request.name())
+            .subject(request.subject())
+            .content(request.content())
+            .isHtml(request.isHtml())
+            .build();
     }
 
     private void updateTemplateFields(MailTemplate template, MailTemplateRequest request) {

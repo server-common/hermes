@@ -15,4 +15,13 @@ public interface MailLogRepository extends JpaRepository<MailLog, Long> {
     long countByStatus(MailLog.MailStatus status);
 
     long countByStatusAndSentAtAfter(MailLog.MailStatus status, LocalDateTime sentAt);
+
+    // Group-scoped
+    Page<MailLog> findByGroupKey(String groupKey, Pageable pageable);
+
+    Page<MailLog> findByStatusAndGroupKey(MailLog.MailStatus status, String groupKey, Pageable pageable);
+
+    long countByStatusAndGroupKeyAndSentAtAfter(MailLog.MailStatus status, String groupKey, LocalDateTime sentAt);
+
+    java.util.Optional<MailLog> findByIdAndGroupKey(Long id, String groupKey);
 }

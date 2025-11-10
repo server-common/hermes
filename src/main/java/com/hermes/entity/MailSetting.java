@@ -36,7 +36,10 @@ public class MailSetting {
     @Comment("시스템 설정 고유 ID")
     private Long id;
 
-    @Column(name = "setting_key", unique = true)
+    @Comment("시스템 설정 고유 KEY")
+    private String groupKey;
+
+    @Column(name = "setting_key")
     @Comment("시스템 설정 키")
     private String settingKey;
 

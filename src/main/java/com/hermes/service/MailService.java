@@ -40,27 +40,32 @@ public class MailService {
 
     @Transactional
     public MailResponse sendMail(MailRequest request) {
-        checkDailyLimit();
-        return processAndSendMail(request.to(), request.subject(), request.content());
+        checkDailyLimit(request.groupKey());
+        return processAndSendMail(request.groupKey(), request.to(), request.subject(), request.content());
     }
 
     @Transactional
     public MailResponse sendTemplatedMail(TemplateMailRequest request) {
-        checkDailyLimit();
+        checkDailyLimit(request.groupKey());
 
         // 템플릿 조회 및 변수 치환
-        MailTemplateResponse template = mailTemplateService.getTemplateByName(request.templateName());
+        MailTemplateResponse template = mailTemplateService.getTemplateByName(request.templateName(), request.groupKey());
         String processedSubject = mailTemplateService.processTemplate(template.subject(), request.variables());
         String processedContent = mailTemplateService.processTemplate(template.content(), request.variables());
 
         log.info("템플릿 메일 전송 요청: {} -> {} (템플릿: {})", processedSubject, request.to(), request.templateName());
 
-        return processAndSendMail(request.to(), processedSubject, processedContent);
+        return processAndSendMail(request.groupKey(), request.to(), processedSubject, processedContent);
     }
 
-    private MailResponse processAndSendMail(String to, String subject, String content) {
+    private MailResponse processAndSendMail(String groupKey, String to, String subject, String content) {
         // 메일 로그 생성
-        MailLog savedMailLog = mailLogRepository.save(new MailLog(to, subject, content));
+        MailLog savedMailLog = mailLogRepository.save(MailLog.builder()
+            .groupKey(groupKey)
+            .recipient(to)
+            .subject(subject)
+            .content(content)
+            .build());
 
         // 메일 큐에 추가 (실제 전송은 MailQueueService에서 처리)
         mailQueueService.enqueueMailForSending(savedMailLog.getId());
@@ -68,11 +73,11 @@ public class MailService {
         return MailResponse.from(savedMailLog);
     }
 
-    private void checkDailyLimit() {
+    private void checkDailyLimit(String groupKey) {
         try {
-            int dailyLimit = mailSettingService.getSettingValueAsInt("daily_limit", 10000);
+            int dailyLimit = mailSettingService.getSettingValueAsInt(groupKey, "daily_limit", 10000);
             LocalDateTime startOfDay = LocalDateTime.now().toLocalDate().atStartOfDay();
-            long todayCount = mailLogRepository.countByStatusAndSentAtAfter(MailLog.MailStatus.SENT, startOfDay);
+            long todayCount = mailLogRepository.countByStatusAndGroupKeyAndSentAtAfter(MailLog.MailStatus.SENT, groupKey, startOfDay);
 
             if (todayCount >= dailyLimit) {
                 throw new HermesException("일일 메일 전송 제한에 도달했습니다: " + dailyLimit);
@@ -93,20 +98,21 @@ public class MailService {
     }
 
     @Transactional(readOnly = true)
-    public HermesPageResponse<MailResponse> getMailLogs(HermesPageRequest hermesPageRequest) {
-        Page<MailLog> page = mailLogRepository.findAll(hermesPageRequest.toPageable());
+    public HermesPageResponse<MailResponse> getMailLogs(HermesPageRequest hermesPageRequest, String groupKey) {
+        Page<MailLog> page = mailLogRepository.findByGroupKey(groupKey, hermesPageRequest.toPageable());
         return HermesPageResponse.from(page.map(MailResponse::from));
     }
 
     @Transactional(readOnly = true)
-    public MailResponse getMailLog(Long id) {
-        MailLog mailLog = mailLogRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("메일 로그", id.toString()));
+    public MailResponse getMailLog(Long id, String groupKey) {
+        MailLog mailLog = mailLogRepository.findByIdAndGroupKey(id, groupKey)
+            .orElseThrow(() -> new ResourceNotFoundException("메일 로그", id.toString()));
         return MailResponse.from(mailLog);
     }
 
     @Transactional(readOnly = true)
-    public HermesPageResponse<MailResponse> getMailLogsByStatus(MailLog.MailStatus status, HermesPageRequest hermesPageRequest) {
-        Page<MailLog> page = mailLogRepository.findByStatus(status, hermesPageRequest.toPageable());
+    public HermesPageResponse<MailResponse> getMailLogsByStatus(MailLog.MailStatus status, HermesPageRequest hermesPageRequest, String groupKey) {
+        Page<MailLog> page = mailLogRepository.findByStatusAndGroupKey(status, groupKey, hermesPageRequest.toPageable());
         return HermesPageResponse.from(page.map(MailResponse::from));
     }
 
@@ -116,10 +122,10 @@ public class MailService {
     @Transactional
     public BulkMailResponse sendBulkMail(BulkMailRequest request) {
         String batchId = generateBatchId();
-        log.info("대량 메일 발송 시작: batchId={}, 수신자 수={}", batchId, request.recipients().size());
+        log.info("대량 메일 발송 시작: batchId={}, 수신자 수={}, groupKey={}", batchId, request.recipients().size(), request.groupKey());
 
         // 일일 제한 체크 (대량 발송 고려)
-        checkBulkDailyLimit(request.recipients().size());
+        checkBulkDailyLimit(request.groupKey(), request.recipients().size());
 
         List<BulkMailResult> results = new ArrayList<>();
 
@@ -131,7 +137,12 @@ public class MailService {
 
                 // 메일 로그 생성 및 큐에 추가
                 MailLog savedMailLog = mailLogRepository.save(
-                    new MailLog(recipient.to(), personalizedSubject, personalizedContent)
+                    MailLog.builder()
+                        .groupKey(request.groupKey())
+                        .recipient(recipient.to())
+                        .subject(personalizedSubject)
+                        .content(personalizedContent)
+                        .build()
                 );
 
                 mailQueueService.enqueueMailForSending(savedMailLog.getId());
@@ -148,9 +159,9 @@ public class MailService {
         int successCount = results.stream().mapToInt(r -> r.success() ? 1 : 0).sum();
         int failedCount = results.size() - successCount;
 
-        saveBulkMailBatch(batchId, request.recipients().size(), successCount, failedCount, null);
+        saveBulkMailBatch(request.groupKey(), batchId, request.recipients().size(), successCount, failedCount, null);
 
-        log.info("대량 메일 발송 완료: batchId={}, 성공={}, 실패={}", batchId, successCount, failedCount);
+        log.info("대량 메일 발송 완료: batchId={}, 성공={}, 실패={}, groupKey={}", batchId, successCount, failedCount, request.groupKey());
 
         return BulkMailResponse.of(batchId, results);
     }
@@ -161,15 +172,15 @@ public class MailService {
     @Transactional
     public BulkMailResponse sendBulkTemplatedMail(BulkTemplateMailRequest request) {
         String batchId = generateBatchId();
-        log.info("대량 템플릿 메일 발송 시작: batchId={}, 템플릿={}, 수신자 수={}", batchId, request.templateName(), request.recipients().size());
+        log.info("대량 템플릿 메일 발송 시작: batchId={}, 템플릿={}, 수신자 수={}, groupKey={}", batchId, request.templateName(), request.recipients().size(), request.groupKey());
 
         // 일일 제한 체크
-        checkBulkDailyLimit(request.recipients().size());
+        checkBulkDailyLimit(request.groupKey(), request.recipients().size());
 
         // 템플릿 조회 (한 번만)
         MailTemplateResponse template;
         try {
-            template = mailTemplateService.getTemplateByName(request.templateName());
+            template = mailTemplateService.getTemplateByName(request.templateName(), request.groupKey());
         } catch (Exception e) {
             log.error("템플릿 조회 실패: {}", e.getMessage());
             throw new HermesException("템플릿을 찾을 수 없습니다: " + request.templateName());
@@ -185,7 +196,12 @@ public class MailService {
 
                 // 메일 로그 생성 및 큐에 추가
                 MailLog savedMailLog = mailLogRepository.save(
-                    new MailLog(recipient.to(), processedSubject, processedContent)
+                    MailLog.builder()
+                        .groupKey(request.groupKey())
+                        .recipient(recipient.to())
+                        .subject(processedSubject)
+                        .content(processedContent)
+                        .build()
                 );
 
                 mailQueueService.enqueueMailForSending(savedMailLog.getId());
@@ -202,9 +218,9 @@ public class MailService {
         int successCount = results.stream().mapToInt(r -> r.success() ? 1 : 0).sum();
         int failedCount = results.size() - successCount;
 
-        saveBulkMailBatch(batchId, request.recipients().size(), successCount, failedCount, request.templateName());
+        saveBulkMailBatch(request.groupKey(), batchId, request.recipients().size(), successCount, failedCount, request.templateName());
 
-        log.info("대량 템플릿 메일 발송 완료: batchId={}, 성공={}, 실패={}", batchId, successCount, failedCount);
+        log.info("대량 템플릿 메일 발송 완료: batchId={}, 성공={}, 실패={}, groupKey={}", batchId, successCount, failedCount, request.groupKey());
 
         return BulkMailResponse.of(batchId, results);
     }
@@ -212,11 +228,11 @@ public class MailService {
     /**
      * 대량 발송을 위한 일일 제한 체크
      */
-    private void checkBulkDailyLimit(int requestCount) {
+    private void checkBulkDailyLimit(String groupKey, int requestCount) {
         try {
-            int dailyLimit = mailSettingService.getSettingValueAsInt("daily_limit", 10000);
+            int dailyLimit = mailSettingService.getSettingValueAsInt(groupKey, "daily_limit", 10000);
             LocalDateTime startOfDay = LocalDateTime.now().toLocalDate().atStartOfDay();
-            long todayCount = mailLogRepository.countByStatusAndSentAtAfter(MailLog.MailStatus.SENT, startOfDay);
+            long todayCount = mailLogRepository.countByStatusAndGroupKeyAndSentAtAfter(MailLog.MailStatus.SENT, groupKey, startOfDay);
 
             if (todayCount + requestCount > dailyLimit) {
                 throw new HermesException(String.format(
@@ -251,9 +267,10 @@ public class MailService {
     /**
      * 배치 정보 저장
      */
-    private void saveBulkMailBatch(String batchId, int totalCount, int successCount, int failedCount, String templateName) {
+    private void saveBulkMailBatch(String groupKey, String batchId, int totalCount, int successCount, int failedCount, String templateName) {
         try {
             BulkMailBatch batch = BulkMailBatch.builder()
+                .groupKey(groupKey)
                 .batchId(batchId)
                 .totalCount(totalCount)
                 .successCount(successCount)
@@ -279,8 +296,8 @@ public class MailService {
      * 배치 상태 조회
      */
     @Transactional(readOnly = true)
-    public BulkMailStatusResponse getBulkMailBatchStatus(String batchId) {
-        BulkMailBatch batch = bulkMailBatchRepository.findByBatchId(batchId)
+    public BulkMailStatusResponse getBulkMailBatchStatus(String batchId, String groupKey) {
+        BulkMailBatch batch = bulkMailBatchRepository.findByBatchIdAndGroupKey(batchId, groupKey)
             .orElseThrow(() -> new ResourceNotFoundException("배치", batchId));
 
         return BulkMailStatusResponse.from(batch);

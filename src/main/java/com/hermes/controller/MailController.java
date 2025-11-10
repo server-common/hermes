@@ -43,22 +43,25 @@ public class MailController {
     }
 
     @GetMapping("/logs")
-    public ResponseEntity<HermesPageResponse<MailResponse>> getMailLogs(@ModelAttribute @Valid HermesPageRequest hermesPageRequest) {
-        HermesPageResponse<MailResponse> logs = mailService.getMailLogs(hermesPageRequest);
+    public ResponseEntity<HermesPageResponse<MailResponse>> getMailLogs(@ModelAttribute @Valid HermesPageRequest hermesPageRequest,
+        @org.springframework.web.bind.annotation.RequestParam String groupKey) {
+        HermesPageResponse<MailResponse> logs = mailService.getMailLogs(hermesPageRequest, groupKey);
         return ResponseEntity.ok(logs);
     }
 
     @GetMapping("/logs/{id}")
-    public ResponseEntity<MailResponse> getMailLog(@PathVariable Long id) {
-        MailResponse response = mailService.getMailLog(id);
+    public ResponseEntity<MailResponse> getMailLog(@PathVariable Long id,
+        @org.springframework.web.bind.annotation.RequestParam String groupKey) {
+        MailResponse response = mailService.getMailLog(id, groupKey);
         return ResponseEntity.ok(response);
     }
 
     @GetMapping("/logs/status/{status}")
     public ResponseEntity<HermesPageResponse<MailResponse>> getMailLogsByStatus(@PathVariable MailLog.MailStatus status,
-        @ModelAttribute @Valid HermesPageRequest hermesPageRequest) {
+        @ModelAttribute @Valid HermesPageRequest hermesPageRequest,
+        @org.springframework.web.bind.annotation.RequestParam String groupKey) {
 
-        HermesPageResponse<MailResponse> logs = mailService.getMailLogsByStatus(status, hermesPageRequest);
+        HermesPageResponse<MailResponse> logs = mailService.getMailLogsByStatus(status, hermesPageRequest, groupKey);
         return ResponseEntity.ok(logs);
     }
 
@@ -81,8 +84,9 @@ public class MailController {
     }
 
     @GetMapping("/bulk/status/{batchId}")
-    public ResponseEntity<BulkMailStatusResponse> getBulkMailStatus(@PathVariable String batchId) {
-        BulkMailStatusResponse response = mailService.getBulkMailBatchStatus(batchId);
+    public ResponseEntity<BulkMailStatusResponse> getBulkMailStatus(@PathVariable String batchId,
+        @org.springframework.web.bind.annotation.RequestParam String groupKey) {
+        BulkMailStatusResponse response = mailService.getBulkMailBatchStatus(batchId, groupKey);
         return ResponseEntity.ok(response);
     }
 }

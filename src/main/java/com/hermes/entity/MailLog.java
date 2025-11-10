@@ -37,6 +37,9 @@ public class MailLog {
     @Comment("메일 로그 고유 ID")
     private Long id;
 
+    @Comment("메일 로그 고유 KEY")
+    private String groupKey;
+
     @Column(name = "recipient")
     @Comment("수신자 이메일 주소")
     private String recipient;

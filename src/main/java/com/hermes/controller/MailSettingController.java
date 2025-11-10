@@ -40,49 +40,51 @@ public class MailSettingController {
     }
 
     @PutMapping("/key/{key}")
-    public ResponseEntity<MailSettingResponse> updateSettingByKey(@PathVariable String key, @RequestBody Map<String, String> request) {
+    public ResponseEntity<MailSettingResponse> updateSettingByKey(@PathVariable String key, @RequestBody Map<String, String> request,
+        @org.springframework.web.bind.annotation.RequestParam String groupKey) {
         String value = request.get("value");
         if (value == null) {
             return ResponseEntity.badRequest().build();
         }
 
-        MailSettingResponse response = mailSettingService.updateSettingByKey(key, value);
+        MailSettingResponse response = mailSettingService.updateSettingByKey(key, value, groupKey);
         return ResponseEntity.ok(response);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteSetting(@PathVariable Long id) {
-        mailSettingService.deleteSetting(id);
+    public ResponseEntity<Void> deleteSetting(@PathVariable Long id, @org.springframework.web.bind.annotation.RequestParam String groupKey) {
+        mailSettingService.deleteSetting(id, groupKey);
         return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<MailSettingResponse> getSetting(@PathVariable Long id) {
-        MailSettingResponse response = mailSettingService.getSetting(id);
+    public ResponseEntity<MailSettingResponse> getSetting(@PathVariable Long id, @org.springframework.web.bind.annotation.RequestParam String groupKey) {
+        MailSettingResponse response = mailSettingService.getSetting(id, groupKey);
         return ResponseEntity.ok(response);
     }
 
     @GetMapping("/key/{key}")
-    public ResponseEntity<MailSettingResponse> getSettingByKey(@PathVariable String key) {
-        MailSettingResponse response = mailSettingService.getSettingByKeyResponse(key);
+    public ResponseEntity<MailSettingResponse> getSettingByKey(@PathVariable String key, @org.springframework.web.bind.annotation.RequestParam String groupKey) {
+        MailSettingResponse response = mailSettingService.getSettingByKeyResponse(key, groupKey);
         return ResponseEntity.ok(response);
     }
 
     @GetMapping("/key/{key}/value")
-    public ResponseEntity<Map<String, String>> getSettingValue(@PathVariable String key) {
-        String value = mailSettingService.getSettingValue(key);
+    public ResponseEntity<Map<String, String>> getSettingValue(@PathVariable String key, @org.springframework.web.bind.annotation.RequestParam String groupKey) {
+        String value = mailSettingService.getSettingValue(groupKey, key);
         return ResponseEntity.ok(Map.of("key", key, "value", value));
     }
 
     @GetMapping
-    public ResponseEntity<HermesPageResponse<MailSettingResponse>> getSettings(@ModelAttribute @Valid HermesPageRequest hermesPageRequest) {
-        HermesPageResponse<MailSettingResponse> settings = mailSettingService.getSettings(hermesPageRequest);
+    public ResponseEntity<HermesPageResponse<MailSettingResponse>> getSettings(@ModelAttribute @Valid HermesPageRequest hermesPageRequest,
+        @org.springframework.web.bind.annotation.RequestParam String groupKey) {
+        HermesPageResponse<MailSettingResponse> settings = mailSettingService.getSettings(hermesPageRequest, groupKey);
         return ResponseEntity.ok(settings);
     }
 
     @GetMapping("/all")
-    public ResponseEntity<List<MailSettingResponse>> getAllSettings() {
-        List<MailSettingResponse> settings = mailSettingService.getAllSettings();
+    public ResponseEntity<List<MailSettingResponse>> getAllSettings(@org.springframework.web.bind.annotation.RequestParam String groupKey) {
+        List<MailSettingResponse> settings = mailSettingService.getAllSettings(groupKey);
         return ResponseEntity.ok(settings);
     }
 }

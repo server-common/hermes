@@ -36,7 +36,10 @@ public class MailTemplate {
     @Comment("메일 템플릿 고유 ID")
     private Long id;
 
-    @Column(name = "name", unique = true)
+    @Comment("메일 템플릿 고유 KEY")
+    private String groupKey;
+
+    @Column(name = "name")
     @Comment("메일 템플릿 이름")
     private String name;
 

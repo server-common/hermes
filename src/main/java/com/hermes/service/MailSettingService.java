@@ -25,10 +25,15 @@ public class MailSettingService {
 
     private final MailSettingRepository mailSettingRepository;
 
+    @Transactional(readOnly = true)
+    public List<String> getAllGroupKeysForSettings() {
+        return mailSettingRepository.findDistinctGroupKeys();
+    }
+
     @Transactional
     @CacheEvict(value = {"mailSetting", "mailSettingValue"}, allEntries = true)
     public MailSettingResponse createSetting(MailSettingRequest request) {
-        validateSettingKeyUniqueness(request.settingKey(), null);
+        validateSettingKeyUniqueness(request.settingKey(), null, request.groupKey());
 
         MailSetting setting = buildSetting(request);
         MailSetting savedSetting = mailSettingRepository.save(setting);
@@ -40,8 +45,8 @@ public class MailSettingService {
     @Transactional
     @CacheEvict(value = {"mailSetting", "mailSettingValue"}, allEntries = true)
     public MailSettingResponse updateSetting(Long id, MailSettingRequest request) {
-        MailSetting setting = getSettingById(id);
-        validateSettingKeyUniqueness(request.settingKey(), setting.getSettingKey());
+        MailSetting setting = getSettingById(id, request.groupKey());
+        validateSettingKeyUniqueness(request.settingKey(), setting.getSettingKey(), request.groupKey());
 
         updateSettingFields(setting, request);
         MailSetting updatedSetting = mailSettingRepository.save(setting);
@@ -52,58 +57,59 @@ public class MailSettingService {
 
     @Transactional
     @CacheEvict(value = {"mailSetting", "mailSettingValue"}, allEntries = true)
-    public MailSettingResponse updateSettingByKey(String key, String value) {
-        MailSetting setting = getSettingByKey(key);
+    public MailSettingResponse updateSettingByKey(String key, String value, String groupKey) {
+        MailSetting setting = getSettingByKey(key, groupKey);
         setting.updateSettingValue(value);
         MailSetting updatedSetting = mailSettingRepository.save(setting);
 
-        log.info("메일 설정 값 변경: {} = {}", key, value);
+        log.info("메일 설정 값 변경: {} = {} (group={})", key, value, groupKey);
         return MailSettingResponse.from(updatedSetting);
     }
 
     @Transactional
     @CacheEvict(value = {"mailSetting", "mailSettingValue"}, allEntries = true)
-    public void deleteSetting(Long id) {
-        MailSetting setting = getSettingById(id);
+    public void deleteSetting(Long id, String groupKey) {
+        MailSetting setting = getSettingById(id, groupKey);
         mailSettingRepository.delete(setting);
-        log.info("메일 설정 삭제: {}", setting.getSettingKey());
+        log.info("메일 설정 삭제: {} (group={})", setting.getSettingKey(), groupKey);
     }
 
     @Transactional(readOnly = true)
-    @Cacheable(value = "mailSetting", key = "#id")
-    public MailSettingResponse getSetting(Long id) {
-        return MailSettingResponse.from(getSettingById(id));
+    @Cacheable(value = "mailSetting", key = "#id + ':' + #groupKey")
+    public MailSettingResponse getSetting(Long id, String groupKey) {
+        return MailSettingResponse.from(getSettingById(id, groupKey));
     }
 
     @Transactional(readOnly = true)
-    @Cacheable(value = "mailSetting", key = "#key")
-    public MailSettingResponse getSettingByKeyResponse(String key) {
-        return MailSettingResponse.from(getSettingByKey(key));
+    @Cacheable(value = "mailSetting", key = "#key + ':' + #groupKey")
+    public MailSettingResponse getSettingByKeyResponse(String key, String groupKey) {
+        return MailSettingResponse.from(getSettingByKey(key, groupKey));
     }
 
     @Transactional(readOnly = true)
-    @Cacheable(value = "mailSettingValue", key = "#key")
-    public String getSettingValue(String key) {
-        return mailSettingRepository.findValueByKey(key).orElseThrow(() -> new ResourceNotFoundException("설정", key));
+    @Cacheable(value = "mailSettingValue", key = "#groupKey + ':' + #key")
+    public String getSettingValue(String groupKey, String key) {
+        return mailSettingRepository.findValueByKeyAndGroupKey(key, groupKey)
+            .orElseThrow(() -> new ResourceNotFoundException("설정", key));
     }
 
     @Transactional(readOnly = true)
-    @Cacheable(value = "mailSettingValue", key = "#key", condition = "#defaultValue != null")
-    public String getSettingValue(String key, String defaultValue) {
-        return mailSettingRepository.findValueByKey(key).orElse(defaultValue);
+    @Cacheable(value = "mailSettingValue", key = "#groupKey + ':' + #key + ':' + #defaultValue", condition = "#defaultValue != null")
+    public String getSettingValue(String groupKey, String key, String defaultValue) {
+        return mailSettingRepository.findValueByKeyAndGroupKey(key, groupKey).orElse(defaultValue);
     }
 
     @Transactional(readOnly = true)
-    @Cacheable(value = "mailSettingValue", key = "'int:' + #key")
-    public int getSettingValueAsInt(String key) {
-        return parseIntValue(getSettingValue(key), key);
+    @Cacheable(value = "mailSettingValue", key = "'int:' + #groupKey + ':' + #key")
+    public int getSettingValueAsInt(String groupKey, String key) {
+        return parseIntValue(getSettingValue(groupKey, key), key);
     }
 
     @Transactional(readOnly = true)
-    @Cacheable(value = "mailSettingValue", key = "'int:' + #key + ':' + #defaultValue")
-    public int getSettingValueAsInt(String key, int defaultValue) {
+    @Cacheable(value = "mailSettingValue", key = "'int:' + #groupKey + ':' + #key + ':' + #defaultValue")
+    public int getSettingValueAsInt(String groupKey, String key, int defaultValue) {
         try {
-            String value = getSettingValue(key, String.valueOf(defaultValue));
+            String value = getSettingValue(groupKey, key, String.valueOf(defaultValue));
             return parseIntValue(value, key);
         } catch (NumberFormatException e) {
             log.warn("설정 값 파싱 실패, 기본값 사용: {} = {}", key, defaultValue);
@@ -112,36 +118,43 @@ public class MailSettingService {
     }
 
     @Transactional(readOnly = true)
-    public HermesPageResponse<MailSettingResponse> getSettings(HermesPageRequest hermesPageRequest) {
-        Page<MailSetting> page = mailSettingRepository.findAll(hermesPageRequest.toPageable());
+    public HermesPageResponse<MailSettingResponse> getSettings(HermesPageRequest hermesPageRequest, String groupKey) {
+        Page<MailSetting> page = mailSettingRepository.findByGroupKey(groupKey, hermesPageRequest.toPageable());
         return HermesPageResponse.from(page.map(MailSettingResponse::from));
     }
 
     @Transactional(readOnly = true)
-    @Cacheable(value = "mailSetting", key = "'all'")
-    public List<MailSettingResponse> getAllSettings() {
-        return mailSettingRepository.findAll().stream().map(MailSettingResponse::from).toList();
+    @Cacheable(value = "mailSetting", key = "'all:' + #groupKey")
+    public List<MailSettingResponse> getAllSettings(String groupKey) {
+        return mailSettingRepository.findByGroupKey(groupKey).stream().map(MailSettingResponse::from).toList();
     }
 
     // Private helper methods
-    private MailSetting getSettingById(Long id) {
-        return mailSettingRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("설정", id.toString()));
+    private MailSetting getSettingById(Long id, String groupKey) {
+        return mailSettingRepository.findByIdAndGroupKey(id, groupKey)
+            .orElseThrow(() -> new ResourceNotFoundException("설정", id.toString()));
     }
 
-    private MailSetting getSettingByKey(String key) {
-        return mailSettingRepository.findBySettingKey(key).orElseThrow(() -> new ResourceNotFoundException("설정", key));
+    private MailSetting getSettingByKey(String key, String groupKey) {
+        return mailSettingRepository.findBySettingKeyAndGroupKey(key, groupKey)
+            .orElseThrow(() -> new ResourceNotFoundException("설정", key));
     }
 
-    private void validateSettingKeyUniqueness(String newKey, String currentKey) {
+    private void validateSettingKeyUniqueness(String newKey, String currentKey, String groupKey) {
         if (currentKey == null || !currentKey.equals(newKey)) {
-            if (mailSettingRepository.existsBySettingKey(newKey)) {
+            if (mailSettingRepository.existsBySettingKeyAndGroupKey(newKey, groupKey)) {
                 throw new DuplicateResourceException("설정 키", newKey);
             }
         }
     }
 
     private MailSetting buildSetting(MailSettingRequest request) {
-        return MailSetting.builder().settingKey(request.settingKey()).settingValue(request.settingValue()).description(request.description()).build();
+        return MailSetting.builder()
+            .groupKey(request.groupKey())
+            .settingKey(request.settingKey())
+            .settingValue(request.settingValue())
+            .description(request.description())
+            .build();
     }
 
     private void updateSettingFields(MailSetting setting, MailSettingRequest request) {

@@ -15,7 +15,10 @@ public record MailTemplateRequest(
     @NotBlank(message = "내용은 필수입니다")
     String content,
 
-    Boolean isHtml
+    Boolean isHtml,
+
+    @NotBlank(message = "groupKey는 필수입니다")
+    String groupKey
 ) {
 
     public MailTemplateRequest {

@@ -133,32 +133,44 @@ public class CacheService {
             List<String> frequentSettings = warmupProperties.getFrequentSettings();
 
             int loadedCount = 0;
-            for (String settingKey : frequentSettings) {
-                try {
-                    // 설정값 조회 (캐시에 저장됨)
-                    mailSettingService.getSettingValue(settingKey, "default");
 
-                    // 정수형 설정값도 미리 로드
-                    if (isNumericSetting(settingKey)) {
-                        mailSettingService.getSettingValueAsInt(settingKey, 0);
+            // 모든 그룹 키에 대해 워밍업 수행 (없으면 default로 대체)
+            List<String> groupKeys = mailSettingService.getAllGroupKeysForSettings();
+            if (groupKeys == null || groupKeys.isEmpty()) {
+                groupKeys = java.util.List.of("default");
+            }
+
+            for (String groupKey : groupKeys) {
+                if (groupKey == null || groupKey.isBlank()) continue;
+
+                for (String settingKey : frequentSettings) {
+                    try {
+                        // 설정값 조회 (캐시에 저장됨)
+                        mailSettingService.getSettingValue(groupKey, settingKey, "default");
+
+                        // 정수형 설정값도 미리 로드
+                        if (isNumericSetting(settingKey)) {
+                            mailSettingService.getSettingValueAsInt(groupKey, settingKey, 0);
+                        }
+
+                        loadedCount++;
+                        log.debug("설정 캐시 로드: {} (group={})", settingKey, groupKey);
+                    } catch (Exception e) {
+                        log.warn("설정 캐시 로드 실패: {} (group={}) - {}", settingKey, groupKey, e.getMessage());
                     }
+                }
 
+                // 모든 설정 목록도 캐시에 로드
+                try {
+                    mailSettingService.getAllSettings(groupKey);
                     loadedCount++;
-                    log.debug("설정 캐시 로드: {}", settingKey);
+                    log.debug("전체 설정 목록 캐시 로드 (group={})", groupKey);
                 } catch (Exception e) {
-                    log.warn("설정 캐시 로드 실패: {} - {}", settingKey, e.getMessage());
+                    log.warn("전체 설정 목록 캐시 로드 실패 (group={}): {}", groupKey, e.getMessage());
                 }
             }
 
-            // 모든 설정 목록도 캐시에 로드
-            try {
-                mailSettingService.getAllSettings();
-                loadedCount++;
-            } catch (Exception e) {
-                log.warn("전체 설정 목록 캐시 로드 실패: {}", e.getMessage());
-            }
-
-            log.info("메일 설정 캐시 워밍업 완료 - {}개 항목 로드", loadedCount);
+            log.info("메일 설정 캐시 워밍업 완료 - {}개 항목 로드 (groups={})", loadedCount, groupKeys);
 
         } catch (Exception e) {
             log.error("메일 설정 캐시 워밍업 중 오류: {}", e.getMessage());
@@ -176,17 +188,35 @@ public class CacheService {
             List<String> frequentTemplates = warmupProperties.getFrequentTemplates();
 
             int loadedCount = 0;
-            for (String templateName : frequentTemplates) {
-                try {
-                    mailTemplateService.getTemplateByName(templateName);
-                    loadedCount++;
-                    log.debug("템플릿 캐시 로드: {}", templateName);
-                } catch (Exception e) {
-                    log.debug("템플릿 없음 또는 로드 실패: {} - {}", templateName, e.getMessage());
+
+            // 모든 그룹 키 수집 (설정/템플릿 양쪽에서) 후 합집합 사용
+            java.util.Set<String> groupKeySet = new java.util.HashSet<>();
+            try {
+                List<String> settingGroups = mailSettingService.getAllGroupKeysForSettings();
+                if (settingGroups != null) groupKeySet.addAll(settingGroups);
+            } catch (Exception ignored) {}
+            try {
+                List<String> templateGroups = mailTemplateService.getAllGroupKeysForTemplates();
+                if (templateGroups != null) groupKeySet.addAll(templateGroups);
+            } catch (Exception ignored) {}
+            if (groupKeySet.isEmpty()) {
+                groupKeySet.add("default");
+            }
+
+            for (String groupKey : groupKeySet) {
+                if (groupKey == null || groupKey.isBlank()) continue;
+                for (String templateName : frequentTemplates) {
+                    try {
+                        mailTemplateService.getTemplateByName(templateName, groupKey);
+                        loadedCount++;
+                        log.debug("템플릿 캐시 로드: {} (group={})", templateName, groupKey);
+                    } catch (Exception e) {
+                        log.debug("템플릿 없음 또는 로드 실패: {} (group={}) - {}", templateName, groupKey, e.getMessage());
+                    }
                 }
             }
 
-            log.info("메일 템플릿 캐시 워밍업 완료 - {}개 항목 로드", loadedCount);
+            log.info("메일 템플릿 캐시 워밍업 완료 - {}개 항목 로드 (groups={})", loadedCount, groupKeySet);
 
         } catch (Exception e) {
             log.error("메일 템플릿 캐시 워밍업 중 오류: {}", e.getMessage());

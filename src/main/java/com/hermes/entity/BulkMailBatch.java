@@ -36,9 +36,12 @@ public class BulkMailBatch {
     @Comment("배치 고유 ID")
     private Long id;
 
-    @Column(name = "batch_id", unique = true)
+    @Column(name = "batch_id")
     @Comment("배치 식별자")
     private String batchId;
+
+    @Comment("배치 메일 고유 KEY")
+    private String groupKey;
 
     @Column(name = "total_count")
     @Comment("전체 발송 대상 수")

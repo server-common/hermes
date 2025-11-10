@@ -12,7 +12,10 @@ public record TemplateMailRequest(
     @NotBlank(message = "템플릿 이름은 필수입니다")
     String templateName,
 
-    Map<String, String> variables
+    Map<String, String> variables,
+
+    @NotBlank(message = "groupKey는 필수입니다")
+    String groupKey
 ) {
 
 }

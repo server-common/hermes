@@ -11,7 +11,10 @@ public record MailSettingRequest(
     @NotBlank(message = "설정 값은 필수입니다")
     String settingValue,
 
-    String description
+    String description,
+
+    @NotBlank(message = "groupKey는 필수입니다")
+    String groupKey
 ) {
 
 }
