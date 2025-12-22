@@ -74,38 +74,32 @@ public class MailSettingService {
         log.info("메일 설정 삭제: {} (group={})", setting.getSettingKey(), groupKey);
     }
 
-    @Transactional(readOnly = true)
     @Cacheable(value = "mailSetting", key = "#id + ':' + #groupKey")
     public MailSettingResponse getSetting(Long id, String groupKey) {
         return MailSettingResponse.from(getSettingById(id, groupKey));
     }
 
-    @Transactional(readOnly = true)
     @Cacheable(value = "mailSetting", key = "#key + ':' + #groupKey")
     public MailSettingResponse getSettingByKeyResponse(String key, String groupKey) {
         return MailSettingResponse.from(getSettingByKey(key, groupKey));
     }
 
-    @Transactional(readOnly = true)
     @Cacheable(value = "mailSettingValue", key = "#groupKey + ':' + #key")
     public String getSettingValue(String groupKey, String key) {
         return mailSettingRepository.findValueByKeyAndGroupKey(key, groupKey)
             .orElseThrow(() -> new ResourceNotFoundException("설정", key));
     }
 
-    @Transactional(readOnly = true)
     @Cacheable(value = "mailSettingValue", key = "#groupKey + ':' + #key + ':' + #defaultValue", condition = "#defaultValue != null")
     public String getSettingValue(String groupKey, String key, String defaultValue) {
         return mailSettingRepository.findValueByKeyAndGroupKey(key, groupKey).orElse(defaultValue);
     }
 
-    @Transactional(readOnly = true)
     @Cacheable(value = "mailSettingValue", key = "'int:' + #groupKey + ':' + #key")
     public int getSettingValueAsInt(String groupKey, String key) {
         return parseIntValue(getSettingValue(groupKey, key), key);
     }
 
-    @Transactional(readOnly = true)
     @Cacheable(value = "mailSettingValue", key = "'int:' + #groupKey + ':' + #key + ':' + #defaultValue")
     public int getSettingValueAsInt(String groupKey, String key, int defaultValue) {
         try {
@@ -123,7 +117,6 @@ public class MailSettingService {
         return HermesPageResponse.from(page.map(MailSettingResponse::from));
     }
 
-    @Transactional(readOnly = true)
     @Cacheable(value = "mailSetting", key = "'all:' + #groupKey")
     public List<MailSettingResponse> getAllSettings(String groupKey) {
         return mailSettingRepository.findByGroupKey(groupKey).stream().map(MailSettingResponse::from).toList();
