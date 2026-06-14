@@ -30,9 +30,7 @@ spring:
 
   datasource:
     hikari:
-      jdbc-url: ENC(127acm4qpu8mo4wONis4dszUOFT9wlBQcDkYrGxkCpnTBxfINT5jjeqxaBVS+nkUTA+ec5rp0Us0uqtUEeVkhQxVoJaHCxhP0qE5JcYJBBNPpoMXKtrAvdOggFrGl0DfTfF1pVHp/3LaDAszRXcBzqgV+ALxZRBVKzKs3ZOuYmI=)
-      username: ENC(zAkz8qt+/su4PZEUWdGvutZhlbJ9yysFK0J5ffWlZvY0XYdtNuOAHG364cA2R9z1)
-      password: ENC(AJXDwi7F13yehS029XPMRjXKSivVVbDNVA+3YrnvEMRxXpSUePjhWcCibigpf/ee)
+      jdbc-url: ENC(KlFiFbSVgS1YZDiECXEI7mTG8Z+2VaqIy0aHZ5I3sCYgUS1waIj82wRLz/kUK1Zew5IHVnhHZBv66R1QoO4kxeVYPzhs2yz5HmKeiyInixwqA2n1ZfDeuQ9xbHvZO3stVC4lIdjpvP8uJAlAok7Em3rwTm5FdhusZUEf45zecFNdu51H5xTkIHJgFxyWb4nqOhzphfc03iyjciR9RUPJYVusWEdcyN2KI5LZ2tcxwR+AQF1Gy5yeP382au08vhp+hqGrhesrMFKaNzzVh4ZE0Q==)
       driver-class-name: org.postgresql.Driver
       minimum-idle: 10
       maximum-pool-size: 20
@@ -62,10 +60,10 @@ spring:
         one-indexed-parameters: true
 
     redis:
-      username: ENC(DLw1snOP2J0iksWgBaxGuMh43AO4te9o9SeUbe3+u1r0iVukKvVnJqCVJETXn/ah)
-      password: ENC(LOHGTz9fYg2pzRoZy7lytECM9eB9ZPr3RxWTrZpHkKH0z/wk+TneCVraEl2iXrcyXLi3DttmS19+TJiAb8qX1h9DJdeVLMG1EV2Vk8m+8IU=)
-      host: ENC(5vbkQCPIFatsrEziv0Vt4un05p+/wS0R7LevpPSXaSls5gtHmS80d2WHg94QhpDOCLtDrZg4Gi1YQj0qir4aOCcgaym9BrN87JJ1D4mbGz+Y4izKPzFWNLoMUiddZL0i)
-      port: ENC(9UxwmaWdGz0twlrWqgrHdSowcwQuIl0fMugvUXP3AWPJ7/XM2w65gBJDcOOekvAo)
+      username: ENC(ED2r3ichBFldLs5QheBPTAif384dVb7gODR3G91mg/KinltNrLj32e8NygCiHJzn)
+      password: ENC(87PHLAdJRPpY7CwyCsOlI0sM9bnVbinnKjtBa5wPgyHwK53XgkFJeuK0FvL47s0l+MklrUlyOsMUcwMqQtg/hP2fWEkb7xDIrDXhY/4MbHU=)
+      host: ENC(Kr8UHx0CisgYx6IlnhTpaX13u5WyXvNJW3rsXm+rb9mKEOKI1/OkUIHbEgUWox1Xj9bLpPeWGZUud6CNoR6YBebkrfFZDyWc8kgUFjosmIKtBHSjzNaWAzkFLfdPB1fT)
+      port: ENC(CjrrD+L/FnvPmh1YImwlOzkantrfpOnS9+sV1fLAMvDgRTYgkgxAHlKjlGbpWa5A)
       lettuce:
         pool:
           min-idle: 3
@@ -80,10 +78,10 @@ spring:
       cache-null-values: false
 
   mail:
-    host: ENC(9RKY0EvR+H+sXwFz7a3ga6Am5t0AJdY8g6Nr6AodxLW0dj0b+mhh3L/dYpdXENM21rDSQawGqlRZQKYyd/vXggKzGKvYArx7D2cMOQtmSjE=)
-    port: ENC(eRgFvynyK+Vp/Ysdve9LydPdnkDe+LvJDLjz1oj7PJRcba6iXFp8UXHTxaq2ReT7)
-    username: ENC(SdYhGVxcQJfaOeie1M2My7+SqxvalV3S10V5A7uQhcqzWlT7AWH7wpLa3kAIihmMa5mkCrR8jw90Kpo1lUN9CbOrzI0vRMRyELyxwL+7oPQ/YEoZvt1Y5ZX/21dlG2GJil1a0tqZaICVMXo3oPZ/bKTEM/7k7QIuwqJQAh5ythIhHsWe4U8AkNJf3IjRb8zxu2AMxHx7sAG7WNnTa/vwXmCqfSctveW+ulQCSAuNr4isaZjkThVfRjHqpvwpQn/6GuR9ndU8XTg2eKistRYn8Q==)
-    password: ENC(cyj2ee95yoxlu29TPTRIq+J0yrd8DqP+mvJZgz1RbXTnuRiwodBm70toImgZHv9OL7zwgle+U09bVYqiiry8iA==)
+    host: ENC(ugXBrV7Ymft7X6x371M48zUjA00JsBFw3qZkma/ClmjZ7TVFT0LkPAeCJrOAoqpg/WNrUoE8ar6dY/gKN8z2RHjimDNMnRk/qCAUSMhJLaU=)
+    port: ENC(erHh//yoY8fBn9wAj1rn+24bcauRctEWpJQ+4u5TmfPbKs59wMSVdzBBSzY6wJYl)
+    username: ENC(IeukjUZmsecPB1iqY1IGYwyXpKFJRwuBg9PjONFXfGbhtoz3iuE1N+G/oJqzkmjtgoFelkvMYECBDHAvbTgsiHv/4ULWDAUPuKFi3p5CYWHiuBphvhkdDQBKF9dn543IRBj0a+pofUc6eR26Ctfk2AU0O+pdrmL5XnJwOggNJWdK0RlYzKTIH4zIH1WnSSgVLnfFZxcfr8qjTwZoi8uCvOPk5WoZ+jDehij+57P0b0et9NU+WsSJOFojF9rmj9wa2qGih1BOH335W8hxZiHgrw==)
+    password: ENC(/2idfUlTUiCbqg/M4V+HuANjyRZUqOI5uUlTfHIZd8tQChEsYwPBB6WAdsx/l4H/ZUIRPKdxNaS/PHI/gxrIUQ==)
     properties:
       mail:
         smtp:
