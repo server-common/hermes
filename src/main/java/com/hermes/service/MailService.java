@@ -41,6 +41,9 @@ public class MailService {
     @Transactional
     public MailResponse sendMail(MailRequest request) {
         checkDailyLimit(request.groupKey());
+
+        log.info("일반 메일 전송 요청: {} -> {}", request.subject(), request.to());
+
         return processAndSendMail(request.groupKey(), request.to(), request.subject(), request.content());
     }
 

@@ -2,8 +2,8 @@
 
 <included>
   <logger name="com.hermes" level="INFO"/>
-  <logger name="org.springframework.mail" level="INFO"/>
-  <logger name="com.zaxxer.hikari.pool.HikariPool" level="DEBUG"/>
+  <logger name="org.springframework.mail" level="DEBUG"/>
+  <logger name="com.zaxxer.hikari.pool.HikariPool" level="INFO"/>
 
   <logger name="org.hibernate.loader" level="OFF"/>
   <logger name="org.hibernate.hql.internal" level="OFF"/>
