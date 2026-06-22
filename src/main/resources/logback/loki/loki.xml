@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <included>
-    <property name="APP_NAME" value="${spring.application.name}"/>
+    <springProperty scope="context" name="APP_NAME" source="spring.application.name"/>
     <property name="LOKI_LOG_PATTERN" value="%highlight([%-5level]) [%thread] [traceId=%X{traceId}] %cyan(%logger{100}) %yellow(%method:%line) - %msg%n"/>
 
     <appender name="LOKI" class="com.github.loki4j.logback.Loki4jAppender">
@@ -18,7 +18,7 @@
                 level = %level,
                 relative = %relative,
                 thread = %thread,
-                traceId = %X{traceId}
+                traceId = %X{traceId},
                 class = %logger,
                 method = %method,
                 line = %line,

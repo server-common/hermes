@@ -117,6 +117,26 @@ hermes:
         - verification
         - notification
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, prometheus
+  endpoint:
+    shutdown:
+      access: none
+    health:
+      show-details: always
+  metrics:
+    enable:
+      all: true
+    tags:
+      application: ${spring.application.name}
+  prometheus:
+    metrics:
+      export:
+        enabled: true
+
 jasypt:
   encryptor:
     algorithm: PBEWITHHMACSHA512ANDAES_256
