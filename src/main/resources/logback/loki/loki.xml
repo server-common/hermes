@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<included>
+    <property name="APP_NAME" value="${spring.application.name}"/>
+    <property name="LOKI_LOG_PATTERN" value="%highlight([%-5level]) [%thread] [traceId=%X{traceId}] %cyan(%logger{100}) %yellow(%method:%line) - %msg%n"/>
+
+    <appender name="LOKI" class="com.github.loki4j.logback.Loki4jAppender">
+        <http>
+            <url>http://loki:3100/loki/api/v1/push</url>
+        </http>
+        <format>
+            <label>
+                <pattern>app=${APP_NAME},host=${HOSTNAME},level=%level</pattern>
+                <readMarkers>true</readMarkers>
+            </label>
+
+            <structuredMetadataPattern>
+                level = %level,
+                relative = %relative,
+                thread = %thread,
+                traceId = %X{traceId}
+                class = %logger,
+                method = %method,
+                line = %line,
+                msg = %msg
+            </structuredMetadataPattern>
+
+            <message>
+                <pattern>${LOKI_LOG_PATTERN}</pattern>
+            </message>
+
+            <sortByTime>true</sortByTime>
+        </format>
+    </appender>
+</included>

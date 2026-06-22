@@ -7,8 +7,23 @@
   <include resource="logback/default/console.xml"/>
   <include resource="logback/default/logger.xml"/>
 
-  <root level="INFO">
-    <appender-ref ref="CONSOLE"/>
-  </root>
+  <springProfile name="local">
+    <root level="INFO">
+      <appender-ref ref="CONSOLE"/>
+    </root>
+    <logger name="jdbc.sqltiming" level="INFO"/>
+    <logger name="jdbc.resultsettable" level="OFF"/>
+  </springProfile>
+
+  <springProfile name="main">
+    <include resource="logback/loki/loki.xml" />
+
+    <root level="INFO">
+      <appender-ref ref="CONSOLE"/>
+      <appender-ref ref="LOKI"/>
+    </root>
+    <logger name="jdbc.sqltiming" level="INFO"/>
+    <logger name="jdbc.resultsettable" level="OFF"/>
+  </springProfile>
 
 </configuration>

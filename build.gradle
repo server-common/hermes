@@ -25,7 +25,12 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-mail")
     implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("org.springframework.boot:spring-boot-starter-cache")
+    implementation("org.springframework.boot:spring-boot-starter-actuator")
+
     implementation("com.github.ulisesbocchio:jasypt-spring-boot-starter:3.0.5")
+
+    runtimeOnly("io.micrometer:micrometer-registry-prometheus")
+    implementation("com.github.loki4j:loki-logback-appender:2.0.3")
 
     compileOnly("org.projectlombok:lombok")
     annotationProcessor("org.projectlombok:lombok")
@@ -97,7 +102,8 @@ jib {
                 // 빠른 난수 생성
                 "-Djava.security.egd=file:/dev/./urandom",
 
-                "-Djasypt.encryptor.password=" + System.getenv("JASYPT_ENCRYPTOR_PASSWORD")
+                "-Dspring.profiles.active=main",
+                "-Djasypt.encryptor.password=zzErDDiwQ0G6ePdpGEDzHCQNrtYRhkvNt/NSUeDeBmaI8T9B9kqEbz6+jjOuflC6UbSH7+G1NiUu8D3LIfQNIIPCuwji9Qc2H9bIeFJMiMZJnrvBXWPTqGQTTEvZK0cIf2/gIVAhdzAaJDXvd7MDmA"
         )
         ports = ["8020"]
     }
